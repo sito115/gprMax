@@ -1,0 +1,30 @@
+#python:
+
+import time
+import numpy as np 
+from gprMax.input_cmd_funcs import *
+from thomas.python.generate_gprMaxGradient import generateGradientDomain
+
+perm   = {'halfspace': 4,   # eps_r
+          'er_h'     : 6,
+          'er_0'     : 4}
+
+conduct = {'halfspace': 0,
+           'gradient' : 0}
+
+dimension = (6.0 , 1.3, 0.3)
+stepSize  = (0.01, 0.01, 0.01)
+
+gradientStartY    = 0.9                                                 # freespace/gradient interface
+source            = (0.5, gradientStartY + 0.1, dimension[2]/2)         # coordinates of source, 10cm above gradientStart
+receiverCord      = (source[0] + 2.5e-2, source[1], source[2], 2.5e-2)  # rec x,y,z and step width
+ndepths           = 10                                                  # number of discretizations within gradient                
+hscaling          = 1.0                                                 # scaling for gradient thickness, by default dominant lambda            
+
+generateGradientDomain(dimensions=dimension, dxdydz=stepSize, srPos=source, recConfig=receiverCord, z_end=gradientStartY, 
+                       nDepths=ndepths, h_scaling=0.8, permitivities=perm, conductivities=conduct,
+                       isBscan=True, geomScale=-1, nSnaps=-1)
+
+
+#output_dir: "C:\OneDrive - Delft University of Technology\4. Semester - Thesis\OutputgprMax"
+#end_python:                 

@@ -1,0 +1,60 @@
+#python:
+import os
+import numpy as np 
+from thomas.python.generateRLFLA import antenna_like_RLFLA
+from gprMax.input_cmd_funcs import *
+
+pathRoot = "C:\OneDrive - Delft University of Technology\4. Semester - Thesis\OutputgprMax"
+
+print('#output_dir: {}'.format(pathRoot))
+
+geometryFileName = 'Test_Geometry_for_RLFLAWithHalfSpace'
+dim              = domain(3,0.5,0.3)
+z_dim            = 0.005
+resolution       = 0.005
+scalingY         = 0.7
+soureFreq        = 92e6
+azimuth          = dip = 0
+polarisation     = 'x'
+
+assert dim.x >= 1.25, "X-Dimension is smaller than RSFLA"
+
+antennaPos  = (0.3, scalingY * dim.y, 0.5*dim.z)  # position of antenna
+geomScaling = 1                                   # resolution scaling for geometry view
+
+# Material Properties
+permitivities = {'halfspace':4}
+
+
+# Simulation Time & Discretization
+tsim = 5   *dim.y*np.sqrt(max(permitivities.values()))/(3e8)
+dx   = dx_dy_dz(resolution, resolution, z_dim)
+
+time_window(tsim)
+
+# Define Halfspace and Free_Space
+material(permitivities['halfspace'], 0, 1, 0, 'half_space')
+
+box(0, 0, 0, dim.x, scalingY * dim.y - 0.1, dim.z,                'half_space')
+# box(0, scalingY * dim.y - 0.1, 0, dim.x, scalingY * dim.y, dim.z, 'free_space')
+
+# Place RLFLA Antenna
+antenna_like_RLFLA(antennaPos[0], antennaPos[1], antennaPos[2], polarisation, azimuth, dip,
+                    0, 0.8*tsim)
+
+# Receiver Position
+rx(0.85*dim.x, scalingY * dim.y, 0.5*dim.z)
+
+# Geometry View
+geometry_view(0, 0, 0, dim.x, dim.y, dim.z, geomScaling*dx.x, geomScaling*dx.y,
+              geomScaling*dx.z, geometryFileName, 'n')
+
+# Snapshots
+N = 50
+for i in range(1, N+1):
+    snapshot(0, 0, 0,
+             dim.x, dim.y, dim.z,
+             dx.x, dx.y, dx.z, i*(tsim/N), 'snapshot' + str(i))
+
+#end_python:
+
