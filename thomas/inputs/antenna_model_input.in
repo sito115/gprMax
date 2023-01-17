@@ -1,0 +1,105 @@
+	DC (static) relative permittivity of
+	|	relative permittivity at theoretically infinite frequency
+	|	|		relaxation time of the medium
+	|	|		|			DC (static) conductivity of the medium σ (Siemens/metre)
+	|	|		|			|			relative permeability of the medium
+	|	|		|			|			|		magnetic conductivity of the medium
+	|	|		|			|			|		|		name of the material 
+#medium:  1.00	0.000 	0.000 	0.0010 		1.000  0.000 air 
+#medium:  80.0	0.000 	0.000 	0.05 		1.000  0.000 fresh_water
+#medium:  12.0	0.000	0.000 	0.0010 		1.000  0.000 wet_sand 
+#medium:  04.0	0.000	0.000	0.00001		1.000  0.000 C_1
+#medium:  04.0	0.000	0.000	0.0001		1.000  0.000 C_2  
+#medium:  04.0	0.000	0.000	0.0 	    1.000  0.000 S_1
+#medium:  3.9	0.000	0.000	1e-14 	    1.000  0.000 PVC
+
+
+#domain:	7.0	2.0	11.0 
+#dx_dy_dz: 0.01 0.01 0.01 
+#time_window: 100e-9  
+#abc_type: pml 
+#pml_layers: 20 
+#num_of_procs: 96 
+#nips_number: 40
+
+
+#box: 0.0 0.0 0.0 7.0 2.0 11.0 wet_sand 
+
+#voltage_source: 1 2e8 ricker 0 MyDipole
+
+
+Borehole design 
+BH1
+#cylinder: z	0.00	11.00	1.0		1	0.05	PVC
+#cylinder: z	0.00	11.00	1.0		1	0.04	air
+
+BH2
+#cylinder: z	0.00	11.00	6.0		1	0.05	PVC
+#cylinder: z	0.00	11.00	6.0		1	0.04	air
+Antenna structure 
+TX
+
+#cylinder: z	0.95	2.05	1.0		1	0.02	S_1
+#cylinder: z	1.00	2.00	1.0		1	0.01	pec
+#cylinder: z	0.98	1.00	1.0		1	0.01	pec
+#cylinder: z	1.02	1.04	1.0		1	0.01	C_1
+#cylinder: z	1.06	1.08	1.0		1	0.01	C_1
+#cylinder: z	1.10	1.12	1.0		1	0.01	C_1
+#cylinder: z	1.14	1.16	1.0		1	0.01	C_1
+#cylinder: z	1.18	1.20	1.0		1	0.01	C_1
+#cylinder: z	1.22	1.24	1.0		1	0.01	C_1
+#cylinder: z	1.26	1.28	1.0		1	0.01	C_1
+#cylinder: z	1.30	1.32	1.0		1	0.01	C_1
+#cylinder: z	1.34	1.36	1.0		1	0.01	C_1
+#cylinder: z	1.38	1.40	1.0		1	0.01	C_1
+#cylinder: z	1.42	1.44	1.0		1	0.01	C_1
+#cylinder: z	1.46	1.48	1.0		1	0.01	C_1
+#cylinder: z	1.50	1.52	1.0		1	0.01	C_1
+#cylinder: z	1.54	1.56	1.0		1	0.01	C_1
+#cylinder: z	1.58	1.60	1.0		1	0.01	C_1
+#cylinder: z	1.62	1.64	1.0		1	0.01	C_1
+#cylinder: z	1.66	1.68	1.0		1	0.01	C_1
+#cylinder: z	1.70	1.72	1.0		1	0.01	C_1
+#cylinder: z	1.74	1.76	1.0		1	0.01	C_1
+#cylinder: z	1.78	1.80	1.0		1	0.01	C_1
+#cylinder: z	1.82	1.84	1.0		1	0.01	C_1
+#cylinder: z	1.86	1.88	1.0		1	0.01	C_1
+#cylinder: z	1.90	1.92	1.0		1	0.01	C_1
+#cylinder: z	1.94	1.96	1.0		1	0.01	C_1
+#cylinder: z	1.98	2.00	1.0		1	0.01	C_1
+#cylinder: z	1.49	1.51	1.0		1	0.01	free_space
+
+TR
+#cylinder: z	0.95	2.05	6.0		1	0.02	S_1
+#cylinder: z	1.00	2.00	6.0		1	0.01	pec
+#cylinder: z	0.98	1.00	6.0		1	0.01	C_1
+#cylinder: z	1.02	1.04	6.0		1	0.01	C_1
+#cylinder: z	1.06	1.08	6.0		1	0.01	C_1
+#cylinder: z	1.10	1.12	6.0		1	0.01	C_1
+#cylinder: z	1.14	1.16	6.0		1	0.01	C_1
+#cylinder: z	1.18	1.20	6.0		1	0.01	C_1
+#cylinder: z	1.22	1.24	6.0		1	0.01	C_1
+#cylinder: z	1.26	1.28	6.0		1	0.01	C_1
+#cylinder: z	1.30	1.32	6.0		1	0.01	C_1
+#cylinder: z	1.34	1.36	6.0		1	0.01	C_1
+#cylinder: z	1.38	1.40	6.0		1	0.01	C_1
+#cylinder: z	1.42	1.44	6.0		1	0.01	C_1
+#cylinder: z	1.46	1.48	6.0		1	0.01	C_1
+#cylinder: z	1.50	1.52	6.0		1	0.01	C_1
+#cylinder: z	1.54	1.56	6.0		1	0.01	C_1
+#cylinder: z	1.58	1.60	6.0		1	0.01	C_1
+#cylinder: z	1.62	1.64	6.0		1	0.01	C_1
+#cylinder: z	1.66	1.68	6.0		1	0.01	C_1
+#cylinder: z	1.70	1.72	6.0		1	0.01	C_1
+#cylinder: z	1.74	1.76	6.0		1	0.01	C_1
+#cylinder: z	1.78	1.80	6.0		1	0.01	C_1
+#cylinder: z	1.82	1.84	6.0		1	0.01	C_1
+#cylinder: z	1.86	1.88	6.0		1	0.01	C_1
+#cylinder: z	1.90	1.92	6.0		1	0.01	C_1
+#cylinder: z	1.94	1.96	6.0		1	0.01	C_1
+#cylinder: z	1.98	2.00	6.0		1	0.01	C_1
+#cylinder: z	1.49	1.51	6.0		1	0.01	free_space
+
+#analysis: 1  N1X.out b
+#tx: z 	1.0 	1.0 	1.50 	MyDipole 0.0 	100e-9 
+#rx: 	6.0 	1.0 	1.50 

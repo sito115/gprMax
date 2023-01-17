@@ -1,0 +1,73 @@
+#python:
+import os
+import numpy as np 
+from thomas.python.generateRLFLA import antenna_like_RLFLA
+from gprMax.input_cmd_funcs import *
+
+isAntenna   = True      # Test for RLFLA and Dipole
+geomScaling = 1         # Scaling Step Size for GeomView
+dYAntenna   = 5         # Distance betwenn TX and RX in y direction
+resolution  = 0.01      
+
+nPML = 20
+command('pml_cells', nPML)    # 20 PML Cells
+# command('pml_cells', nPML, nPML, 0, nPML, nPML, 0)
+
+steps = dx_dy_dz(resolution, resolution, resolution)
+dim   = domain(x=0.7 +2*nPML*resolution , y=dYAntenna + 0.3 + 2*nPML*resolution, z=0.4 + 2*nPML*resolution)
+
+antennaPos = (dim[0]/2-0.6/2+0.26, (dim[1]+dYAntenna)/2, dim[2]/2 ) #dim[2]/2)  # Scale Placing of RLFLA
+
+eps_r      = 1.0    # Homo environment
+# eps_r0     = 1.0    # AIR
+nSnaps     = 50    # Number of Snapshots
+
+tSim = time_window(3 * dYAntenna * np.sqrt(eps_r) /3e8) # Time window is 1.5x travel distance between TX-RX
+
+material(permittivity=eps_r, conductivity=0, permeability = 1, magconductivity = 0, name= 'eps_r' + str(eps_r))
+
+
+# AIR environment
+box(xs= 0, ys= 0, zs=  0,
+    xf=dim[0], yf=dim[1] , zf=dim[2]  
+    ,material='eps_r' + str(eps_r))
+
+dirName = 'PlaceAntennasDist%.1fm_tSim%.2eeps%.2fiA%d' %(dYAntenna, tSim, eps_r, isAntenna)
+
+if isAntenna:
+    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1], z=antennaPos[2],
+                    polarisation='x', azimuth=0, inclination=0,isTx=True, ID='TX', timeDelay=0, timeRemove=tSim)
+    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2],
+                    polarisation='x', azimuth=0, inclination=0,isTx=False, ID='RX', timeDelay = 0, timeRemove=tSim)
+else:
+    freq = 125e6
+    waveID  = waveform('gaussiandotnorm ', amplitude=1,
+                            frequency=freq, identifier='GausDotNormDipole')
+    hertzian_dipole(polarisation='x', f1=antennaPos[0], f2=antennaPos[1], f3=antennaPos[2], identifier=waveID)
+    rx(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2])
+
+    dirName = dirName + '_' + '%d' % (freq/1e6) + 'MHz'
+
+geometry_view(0,0,0,dim[0], dim[1], dim[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
+              dirName)
+
+    # Logicals
+if nSnaps > 0:
+    name = 'snapshot' + dirName
+    for i in range(1, nSnaps+1):
+        snapshot(0, 0, 0,
+                dim.x, dim.y, dim.z,
+                steps.x, steps.y, steps.z,
+                
+                i*(tSim/nSnaps), name + str(i))
+
+
+# NewDir = os.path.join(pathRoot, dirName)
+# try: 
+#     os.mkdir(NewDir) 
+# except OSError as error: 
+#     print(error)  
+# print('#output_dir: results')
+
+
+#end_python:
