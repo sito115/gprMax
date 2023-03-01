@@ -3,9 +3,17 @@
 %
 % Craig Warren
 
-clear all, clc
+clear, clc
 
-[filename, pathname] = uigetfile('*.out', 'Select gprMax A-scan output file to plot');
+pathRoot     = 'C:\OneDrive - Delft University of Technology';
+trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
+figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
+
+stopCrit = 3;
+
+Traces2Plot = 1;
+
+[filename, pathname] = uigetfile([fullfile(pathRoot,trdSemester) '\*.out'], 'Select gprMax A-scan output file to plot');
 fullfilename = strcat(pathname, filename);
 
 if filename ~= 0
@@ -19,19 +27,24 @@ if filename ~= 0
     header.nsrc = h5readatt(fullfilename, '/', 'nsrc');
     header.nrx = h5readatt(fullfilename, '/', 'nrx');
 
+    if isempty(Traces2Plot)
+        Traces2Plot = header.nrx;
+    end
+
     % Time vector for plotting
     time = linspace(0, (header.iterations - 1) * header.dt, header.iterations)';
 
     % Initialise structure for field arrays
-    fields.ex = zeros(header.iterations, header.nrx);
-    fields.ey = zeros(header.iterations, header.nrx);
-    fields.ez = zeros(header.iterations, header.nrx);
-    fields.hx = zeros(header.iterations, header.nrx);
-    fields.hy = zeros(header.iterations, header.nrx);
-    fields.hz = zeros(header.iterations, header.nrx);
+    fields.ex = zeros(header.iterations, numel(Traces2Plot));
+    fields.ey = zeros(header.iterations, numel(Traces2Plot));
+    fields.ez = zeros(header.iterations, numel(Traces2Plot));
+    fields.hx = zeros(header.iterations, numel(Traces2Plot));
+    fields.hy = zeros(header.iterations, numel(Traces2Plot));
+    fields.hz = zeros(header.iterations, numel(Traces2Plot));
 
     % Save and plot fields from each receiver
-    for n=1:header.nrx
+    counter = 0;
+    for n=Traces2Plot
         path = strcat('/rxs/rx', num2str(n));
         tmp = h5readatt(fullfilename, path, 'Position');
         header.rx(n) = tmp(1);
@@ -72,5 +85,10 @@ if filename ~= 0
         set(fh1,'PaperSize', [X Y])
         set(fh1,'PaperPosition', [xMargin yMargin xSize ySize])
         set(fh1,'PaperOrientation', 'portrait')
+
+        counter = counter + 1;
+        if counter > stopCrit
+            error('Too many figure')
+        end
     end
 end
