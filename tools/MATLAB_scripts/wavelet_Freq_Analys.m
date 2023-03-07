@@ -1,4 +1,7 @@
 %% Select Path
+
+function allData = fft_gprMaxOutput(path, fileNameSelect)
+
 clear
 %% File give or GUI?
 isFile       = 0;
@@ -8,34 +11,13 @@ pathRoot     = 'C:\OneDrive - Delft University of Technology';
 trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
 figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
 
-if isFile
-    pathname = fullfile(pathRoot,trdSemester);
-    filenameSelect = 'PlaceAntennasDist5.0m_tSim2.24e-07eps20.00iA1.out';
-    check = true;
-else
-    [filenameSelect, pathname, check] = uigetfile([fullfile(pathRoot,trdSemester) '\*.out'],...
-                                        'Select gprMax output file to plot B-scan', 'MultiSelect', 'on');
-    
-end
-fullfilename                          = fullfile(pathname, filenameSelect);
-
-lw           = 1.5;
-fcut         = 9.5e8;
-isSave       = false;
-isTimeWindow = false;
-isPickt0     = false;
-
-normalization = 'lin';  % 'db' or 'lin'
-
-
-t0   = [];
-tEnd = [];
+fullfilename = fullfile(path, fileNameSelect);
 
 allComponents = {'Ex', 'Ey', 'Ez'};
 %% Check
 assert(check ~= 0, 'No File Selected')
-fprintf('Loaded... %s\n', filenameSelect)
-%% Load Data
+
+%% Load MetaData
 header.title = h5readatt(fullfilename, '/', 'Title');
 header.iterations = double(h5readatt(fullfilename,'/', 'Iterations'));
 tmp = h5readatt(fullfilename, '/', 'dx_dy_dz');
@@ -52,6 +34,11 @@ srcTemp      = h5readatt(fullfilename, '/srcs/src1', 'Position');
 header.sx = srcTemp(1);
 header.sy = srcTemp(2);
 header.sz = srcTemp(3);
+
+
+fprintf('Loaded... %s\n', filenameSelect)
+
+%% Load E-Field Time Domain
 
 % Time vector for plotting
 time = linspace(0, (header.iterations - 1) * header.dt, header.iterations)';
@@ -95,69 +82,7 @@ for component = allComponents
     end
 end
 
-if isempty(fcut)
-    fcut = fAxis(end);
-end
 
-%% Plot
-for iRx = 1:header.nrx
-    fig = figure;
-    t = tiledlayout(1,2);
-    for component = allComponents(1)
-        comp = component{1};
-        nexttile
-        plot(time, fields.(comp)(:,iRx),'LineWidth',lw)
-        title(sprintf('%s - Time Domain', comp))
-        xlabel('Time (s)')
-        hold on
-    
-        nexttile
-        fftData = FFT.(comp)(:,iRx);
-        FFT.([comp, 'Norm'])(:,iRx) = DataNorm(abs(fftData(:,:)), normalization);
-        stem(fAxis,FFT.([comp, 'Norm'])(1:numel(fAxis),iRx) ,'LineWidth',lw, 'Color', 'b', 'LineStyle','-.')
-        hold on
-        stem(fAxis,FFT.([comp, 'Norm'])(1:numel(fAxis),iRx) ,'LineWidth',0.5*lw, 'Color', 'b')
-        title(sprintf('%s - Frequency Domain', comp))
-        xlabel('Frequency (Hz)')
-        xlim([0 fcut])
-    end
-end
-
-
-dcm = datacursormode;
-dcm.Enable = 'on';
-dcm.UpdateFcn = @displayCoordinates;
-
-if isSave
-    exportgraphics(gca, fullfile(figureFolder, [filenameSelect, num2str(iRx) ,'.pdf'] ),...
-                   'ContentType','vector',...
-                   'BackgroundColor','none')  
-
-end
-
-
-[~, indTd] = max(fields.Ex);
-fprintf('Figure 1: Max Amplitude at %e s\n', time(indTd(1)))
-[~, indFd] = max(FFT.ExNorm);
-fprintf('Figure 1: Dominant Frequency at %e Hz\n', fAxis(indFd(1)))
-
-
-
-if isPickt0
-    fprintf('Pick time zero position:\n')
-    isCorrect = false;
-    while isCorrect == false
-        [x,y] = ginput(1);
-        fprintf('First arrival time at %e s\n', x)
-        s = input('Is picking OK? [y,n]\n','s');
-        if strcmp(s,'y')
-            isCorrect = true;
-            break
-        end
-    end
-    axnum = find(ismember(t.Children,gca));
-    plot(x,y,'Parent',t.Children(axnum), 'Color','r', 'Marker','o')
-end
 
 %% Create output structure
 
@@ -167,39 +92,41 @@ if strcmp(isSaveStruc, 'y')
 
     newName = erase(filenameSelect,{'.','-','_'});
     
-    
-    NewRes= struct;
-    NewRes.(newName).Attributes   = header;
-    NewRes.(newName).Data.fields  = fields;
-    NewRes.(newName).Data.FFT     = FFT;
-    NewRes.(newName).Axis.time    = time;
-    NewRes.(newName).Axis.fAxis    = fAxis;
-    NewRes.(newName).Label.DomFreq = fAxis(indFd(1));
-    NewRes.(newName).Label.MaxAmp  = time(indTd(1));
+    allData= struct;
+    allData.(newName).Attributes   = header;
+    allData.(newName).Data.fields  = fields;
+    allData.(newName).Data.FFT     = FFT;
+    allData.(newName).Axis.time    = time;
+    allData.(newName).Axis.fAxis    = fAxis;
+    allData.(newName).Label.DomFreq = fAxis(indFd(1));
+    allData.(newName).Label.MaxAmp  = time(indTd(1));
 
     %% Save
 
-    data = load(fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'));
-    Results = data.Results;
-
-    if ~ismember(newName, fieldnames(Results))
-       
-        Results.(newName) = NewRes.(newName);
-
-        save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
-        fprintf('Succesfully save file.\n')
-    else
-        fprintf('The field %s already exists in Results\n', newName)
-        answer = input('Really save?\n','s');
-        if strcmp(answer, 'y')
-            Results.(newName) = NewRes.(newName);
-    
-            save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
-            fprintf('Succesfully save file.\n')
-        end
-    end
+%     data = load(fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'));
+%     Results = data.Results;
+% 
+%     if ~ismember(newName, fieldnames(Results))
+%        
+%         Results.(newName) = allData.(newName);
+% 
+%         save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
+%         fprintf('Succesfully save file.\n')
+%     else
+%         fprintf('The field %s already exists in Results\n', newName)
+%         answer = input('Really save?\n','s');
+%         if strcmp(answer, 'y')
+%             Results.(newName) = allData.(newName);
+%     
+%             save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
+%             fprintf('Succesfully save file.\n')
+%         end
+%     end
+% 
+% end
 
 end
+
 % %% Select Time Window
 % if isTimeWindow
 % 

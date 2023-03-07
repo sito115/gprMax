@@ -1,4 +1,9 @@
-function allData = load_output(filenameArray)
+function allData = load_output(allData, filenameArray,pathname)
+% filenameArray = cell array
+% pathname      = string
+% allData       = structure
+
+% allData       = structure
 
 if iscell(filenameArray)
     for iFile = 1:numel(filenameArray)

@@ -1,59 +1,126 @@
 clear, clc, close all
-%% LOAD
+
+%% PARAMETER
+lw            = 1.5;    % line width
+fs            = 15;     % font size
+
+% Dialog
+prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency', 'Threshold first non-zero value',...
+          'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]'};
+answer = inputdlg(prompt','Define Parameters',[1 150],{'Ex', '5e8', '1e-7', '1', '0'});
+
+component         = answer{1};
+fcut              = str2double(answer{2});
+nonZeroThresh     = str2double(answer{3});
+normalizationTime = str2double(answer{4});
+normalizationFreq = str2double(answer{5});
+
+% Default folders
 pathRoot     = 'C:\OneDrive - Delft University of Technology';
 trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
 figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
 
-data = load(fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'));
-Results = data.Results;
-names = fieldnames(Results);
 
-%% PARAMETER
-fcut          = 5e8;
-lw            = 1.5;
-fs            = 15;
-isPickt0      = true;
-nonZeroThresh = 1e-7;
+% filenameArray = {'PlaceAntennas_Dist2.0m_tSim2.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist3.0m_tSim3.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist3.5m_tSim2.92e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist4.0m_tSim4.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist5.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist7.0m_tSim7.00e-08_eps1.00_iA1_iBH0.out'  };
+% 
+filenameArray = {'PlaceAntennas_Dist1.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                 'PlaceAntennas_Dist2.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                 'PlaceAntennas_Dist3.5m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                 'PlaceAntennas_Dist4.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                 'PlaceAntennas_Dist5.0m_tSim5.00e-08_eps1.00_iA1_iBH0 (2).out',...
+                 'PlaceAntennas_Dist7.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out'};
 
-% Select files
-[indx,tf] = listdlg('PromptString',{'Select files.',...
-    'Will be loaded and plotted for TD and FD.',''},...
-    'SelectionMode','multiple','ListString',names, 'ListSize',[400 300]);
-assert(tf ~= 0, 'No file was selected.')
+pathname        = fullfile(pathRoot, trdSemester, 'Results');
 
+%% Start Skript
+allData  = struct;
 
+answer = questdlg(['Start of the program: Which files should be selected? Pre-Selected files' filenameArray], ...
+    'Question', ...
+    'Manual','Default','Cancel','Manual');
+% Handle response
+switch answer
+    case 'Manual'
+        isManual = 1;
+    case 'Default'
+        isManual = 0;
+        allData = load_output(allData,filenameArray, pathname);
+    case 'Cancel'
+        return
+end
+
+%% Start Loading Data
+isFile = 1;
+while isFile == 1
+    [filenameArray, pathname, check] = uigetfile([fullfile(pathRoot,trdSemester) '\*.out'],...
+                                'Select gprMax output file to plot B-scan', 'MultiSelect', 'on');
+    
+    if check == 0   % user pressed cancel
+        break
+    end
+
+    allData = load_output(allData,filenameArray, pathname);
+
+    answer = questdlg('Would you like to chose more files?', ...
+	    'Question', ...
+	    'Yes','No','Cancel','No');
+    % Handle response
+    switch answer
+        case 'Yes'
+            isFile = 1;
+        case 'No'
+            isFile = 0;
+        case 'Cancel'
+            return
+    end
+end
+
+fieldNames = fieldnames(allData);
+nField     = numel(fieldNames);
 
 %% PLOT
 % TIME DOMAIN
-fC = zeros(numel(indx),1);
 
-t = tiledlayout(1,2);
+f = figure;
+t = tiledlayout(1,2, 'Parent',f); %, 'Units', 'normalized','OuterPosition',[0 0.15 1 0.85]);
 timeLines = struct;
 nexttile
 grid on
 set(gca, 'FontSize', fs)
 hold on
-counter = 0;
+
 fprintf('#### Time Domain ####\n\n')
-for iSelec = indx
-    counter = counter + 1;
-    nameSel = names{iSelec};
-    [~,nameDisp,ext] = fileparts(Results.(nameSel).Attributes.fullfileName);
-    tempData = Results.(nameSel).Data.fields;
-    tempAxis = Results.(nameSel).Axis;
+colors = zeros(nField,3);
+for iField = 1:nField
+    TempField = allData.(fieldNames{iField});
 
-    fprintf('\t %s \n',nameDisp)
-    exValuesNormalized = tempData.Ex/max(abs([min(tempData.Ex), max(tempData.Ex)]));
-    idx = find(abs(exValuesNormalized)>nonZeroThresh,1);
-    fprintf('First non-zero value above threshold %.2e = %e s\n', nonZeroThresh, tempAxis.time(idx(1)))
+    tempData = TempField.Data.fields.(component);
+    tempAxis = TempField.Axis.time;
 
-    curLine = plot(tempAxis.time,exValuesNormalized , 'DisplayName',names{iSelec},'LineWidth', lw);
-    timeLines.(nameSel) = curLine;
+    fprintf('%s \n',TempField.FileName)
+
+    if normalizationTime 
+        tempData = tempData/max(abs([min(tempData), max(tempData)]));
+    end
+
+    idx = find(abs(tempData)>nonZeroThresh,1);
+    fprintf('\tFirst non-zero value above threshold %.2e = %e s\n', nonZeroThresh, tempAxis(idx(1)))
+    
+    [~, indTd] = max(tempData);
+    fprintf('\tMax Amplitude at %e s\n', tempAxis(indTd(1)))
+
+    currentLine = plot(tempAxis,tempData , 'DisplayName',TempField.FileName,'LineWidth', lw);
+    colors(iField,:) = get(currentLine, 'Color');
+
     xlabel('Time (s)')
-
 end
 % legend
-title('Ex - Time Domain')
+title([component ' - Time Domain'])
 
 % FREQUENCY DOMAIN
 fprintf('\n#### Frequency Domain ####\n\n')
@@ -61,42 +128,52 @@ nexttile
 grid on
 set(gca, 'FontSize', fs)
 hold on
-counter = 0;
 
-for iSelec = indx
-    counter = counter +1;
-    nameSel = names{iSelec};
-    [~,nameDisp,ext] = fileparts(Results.(nameSel).Attributes.fullfileName);
-    tempData = Results.(nameSel).Data.FFT;
-    tempAxis = Results.(nameSel).Axis;
+
+for iField = 1:nField
+    TempField = allData.(fieldNames{iField});
+
+    tempData    = TempField.Data.FFT.(component);
+    tempAxis    = TempField.Axis.fAxis;
+    displayName = TempField.FileName;
+
+    tempData = abs(tempData(:,:));
+    if normalizationFreq 
+        tempData = tempData/max(tempData);
+    end
     
-    currentLine = plot(tempAxis.fAxis, tempData.ExNorm(1:numel(tempAxis.fAxis)), 'DisplayName',[nameDisp,ext],...
-            'LineWidth', lw);
+    fprintf('%s \n',TempField.FileName)
 
-    color = get(currentLine, 'Color');
-    fcTemp = Results.(nameSel).Label.DomFreq;
-    maxAmp = Results.(nameSel).Label.MaxAmp;
+    plot(tempAxis, tempData(1:numel(tempAxis)),...
+        'DisplayName',displayName,'LineWidth', lw, 'Color',colors(iField,:));
 
-    fprintf('\t %s \n',nameDisp)
-    fprintf('F_c = %e Hz\n', fcTemp)
-    fprintf('A_max = %e s\n', maxAmp)
+    [~, indFd] = max(tempData);
+    fcenter = tempAxis(indFd(1));
 
-    fC(counter) = fcTemp;
-    xline(fcTemp, 'HandleVisibility','off',....
+    xline(fcenter, 'HandleVisibility','off',....
         'LabelVerticalAlignment','bottom',...
-        'LabelHorizontalAlignment','center', 'LineStyle','-.', 'Color',color,...
+        'LabelHorizontalAlignment','center', 'LineStyle','-.', 'Color',colors(iField,:),...
         'LineWidth',lw)
     xlim([0 fcut])
     xlabel('Frequency (Hz)')
+
+    fprintf('\tDominant Frequency at %e Hz\n', fcenter)
 end
-l = legend('Interpreter','none', 'FontSize', fs);
-title('Ex - Frequency Domain')
+
+lg = legend('Interpreter','none', 'FontSize', fs, 'Orientation','Horizontal','NumColumns',2);
+lg.Layout.Tile = 'south';
+title([component,' - Frequency Domain'])
 
 
 %% MENU
 m = uimenu('Text','USER-Options');
-mitem = uimenu(m,'Text','Pick Times');
-mitem.MenuSelectedFcn = {@PickTimes,t,numel(indx)};
+
+
+uimenu(m,'Text','Pick Times', 'MenuSelectedFcn',{@PickTimes,t,nField});
+uimenu(m,'Text','Save Figure',...
+         'MenuSelectedFcn',{@SaveFigure, fullfile(pathRoot, figureFolder)});
+uimenu(m, 'Text', 'Change Legend Names', 'MenuSelectedFcn', @changeLegendNames)
+
 
 
 %% Pick times
@@ -117,5 +194,43 @@ function PickTimes(src,event,t,nLines)
     end
 end
 
+%% Save figure
+function SaveFigure(src, event, path)
+
+filterUI = {'*.pdf';'*.jpg';'*.fig';'*.*'};
+
+[file,Selpath] = uiputfile(filterUI,'defname', fullfile(path,'MyFigure')); 
 
 
+% set(gcf,'Units','inches');
+% screenposition = get(gcf,'Position');
+% set(gcf,...
+%     'PaperPosition',[0 0 screenposition(3:4)],...
+%     'PaperSize',[screenposition(3:4)]);
+% print -dpdf -painters epsFig
+% 
+
+fprintf('Saving %s...', file)
+
+exportgraphics(gcf, fullfile(Selpath, file  ),...
+               'ContentType','vector',...
+               'BackgroundColor','none')  
+
+fprintf('Done\n')
+
+end
+
+
+%% changeLegendNames
+function changeLegendNames(src, event)
+
+lgObj = findobj('Type','Legend');
+prompt = lgObj.String;
+
+dlgtitle = 'Change Legend Entry';
+
+answer = inputdlg(prompt',dlgtitle,[1 150],prompt');
+
+set(lgObj,'String',answer)
+
+end

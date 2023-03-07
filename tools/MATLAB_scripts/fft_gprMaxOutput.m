@@ -1,14 +1,8 @@
 %% Select Path
 function [allData,fieldName] = fft_gprMaxOutput(path, fileName)
 
-%%
-pathRoot     = 'C:\OneDrive - Delft University of Technology';
-trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
-figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
-
 fullfilename  = fullfile(path, fileName);
 allComponents = {'Ex', 'Ey', 'Ez'};         % to perform fft
-
 
 %% Load MetaData
 fprintf('%s\n', fileName)
@@ -83,7 +77,7 @@ fprintf('Done \n')
 
 fprintf('\tSaving...')
 
-fieldName = erase(fileName,{'.','-','_'});
+fieldName = erase(fileName,{'.','-','_',' ','(',')','[',']'});
 
 allData= struct;
 allData.(fieldName).Attributes   = header;
