@@ -1,28 +1,43 @@
 #python:
 import os
 import numpy as np 
+import sys
 from thomas.python.generateRLFLA import antenna_like_RLFLA
 from gprMax.input_cmd_funcs import *
 
-isAntenna   = True       # Test for RLFLA and Dipole
-isBorehole  = True      # Is Borehole
-nSnaps      = 50         # Number of Snapshots
-geomScaling = 10          # Scaling Step Size for GeomView
+# sys.path.append("C:\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\\thomas")
+# sys.path.append("C:\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\gprMax")
+
+print(sys.path)
+
+isAntenna   = True         # Test for RLFLA and Dipole
+isBorehole  = True          # Is Borehole
+nSnaps      = -1            # Number of Snapshots
+geomScaling = 1             # Scaling Step Size for GeomView
+isSlice     = 1 
 environ     = 'unsatGravel'
 boreholeEnv = 'waterBoreHole'
 extraInf    = ''
 
-dYAntenna   = 1        # Distance betwenn TX and RX in y direction
-resolution  = 0.01      
+if isBorehole:
+    tSim = time_window(1.2e-7)
+    # tSim = time_window(2.5 * dYAntenna * np.sqrt(15) /3e8) # Time window is 3x travel distance between TX-RX
+else:
+    tSim = time_window(5e-8)
+    # tSim = time_window(3 * dYAntenna * np.sqrt(eps_r) /3e8) # Time window is 3x travel distance between TX-RX
 
-nPML = 40
+dYAntenna   = 3        # Distance betwenn TX and RX in y direction
+resolution  = 0.01      # uniform spatial step 
+
+freq    = 140e6        # for point dipole
+nPML    = 40
 command('pml_cells', nPML)    # nPML Cells
-# command('pml_cells', nPML, nPML, 0, nPML, nPML, 0)
+
 
 eps_r      = 1    # Homo environment
 
 steps = dx_dy_dz(resolution, resolution, resolution)
-dim   = domain(x=0.8 +2*nPML*resolution , y=dYAntenna + 0.6 + 2*nPML*resolution, z=0.4 + 2*nPML*resolution)
+dim   = domain(x=0.9 +2*nPML*resolution , y=dYAntenna + 0.6 + 2*nPML*resolution, z=0.4 + 2*nPML*resolution)
 
 antennaPos = (dim[0]/2-0.6/2+0.26, (dim[1]+dYAntenna)/2, dim[2]/2 )  # Scale Placing of RLFLA
 
@@ -30,30 +45,26 @@ antennaPos = (dim[0]/2-0.6/2+0.26, (dim[1]+dYAntenna)/2, dim[2]/2 )  # Scale Pla
 if isBorehole:
 
     rBoreHole = 0.05
-    rAnt      = 0.02
 
-    material(permittivity=80, conductivity=0, permeability=1, magconductivity=0,  name = 'waterBoreHole')
-    material(permittivity=1, conductivity=0, permeability=1, magconductivity=0,  name = 'airBoreHole')
-    material(permittivity=12.5, conductivity=0, permeability=1, magconductivity=0,  name = 'satGravel')
-    material(permittivity=5, conductivity=0, permeability=1, magconductivity=0,  name = 'unsatGravel')
+    material(permittivity=80,   conductivity=0, permeability=1, magconductivity=0, name = 'waterBoreHole')
+    material(permittivity=1,    conductivity=0, permeability=1, magconductivity=0, name = 'airBoreHole')
+    material(permittivity=12.5, conductivity=0, permeability=1, magconductivity=0, name = 'satGravel')
+    material(permittivity=5,    conductivity=0, permeability=1, magconductivity=0, name = 'unsatGravel')
 
     box(xs= 0, ys= 0, zs=  0,
     xf=dim[0], yf=dim[1] , zf=dim[2]  
     ,material=environ)
  
-    cylinder(x1=0, y1=antennaPos[1]+rAnt,z1=antennaPos[2],
-             x2=dim[0], y2=antennaPos[1]+rAnt,z2=antennaPos[2],
+    # TX
+    cylinder(x1=0, y1=antennaPos[1],z1=antennaPos[2],
+             x2=dim[0], y2=antennaPos[1],z2=antennaPos[2],
+             radius=rBoreHole, material=boreholeEnv)
+    # RX
+    cylinder(x1=0, y1=antennaPos[1]-dYAntenna,z1=antennaPos[2],
+             x2=dim[0], y2=antennaPos[1]-dYAntenna,z2=antennaPos[2],
              radius=rBoreHole, material=boreholeEnv)
 
-    cylinder(x1=0, y1=antennaPos[1]+rAnt-dYAntenna,z1=antennaPos[2],
-             x2=dim[0], y2=antennaPos[1]+rAnt-dYAntenna,z2=antennaPos[2],
-             radius=rBoreHole, material=boreholeEnv)
-
-
-    # tSim = time_window(2.5 * dYAntenna * np.sqrt(15) /3e8) # Time window is 3x travel distance between TX-RX
-    tSim = time_window(1e-7)
-
-    dirName = 'PlaceAntennas_Dist%.2fm_tSim%.2e_iA%d_iBH%d%s%s%s' %(dYAntenna, tSim, isAntenna, isBorehole, environ, boreholeEnv,extraInf)
+    dirName = 'Dist%.2fm_tSim%.2e_iA%d_iBH%d-%s-%s%s' %(dYAntenna, tSim, isAntenna, isBorehole, environ, boreholeEnv,extraInf)
 else:
 
     material(permittivity=eps_r, conductivity=0, permeability = 1, magconductivity = 0, name= 'eps_r' + str(eps_r))
@@ -62,43 +73,64 @@ else:
         xf=dim[0], yf=dim[1] , zf=dim[2]  
         ,material='eps_r' + str(eps_r))
 
-    # tSim = time_window(3 * dYAntenna * np.sqrt(eps_r) /3e8) # Time window is 3x travel distance between TX-RX
-    tSim = time_window(5e-8)
-
     dirName = 'PlaceAntennas_Dist%.1fm_tSim%.2e_eps%.2f_iA%d_iBH%d' %(dYAntenna, tSim, eps_r, isAntenna, isBorehole)
 
 
-
-if isAntenna:
-    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1], z=antennaPos[2],
+if isAntenna:   #RLFLA
+    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1], z=antennaPos[2], resolution=resolution,
                        polarisation='x', azimuth=0, inclination=0,isTx=True, ID='TX', timeDelay=0, timeRemove=tSim)
-    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2],
+    
+    antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2],resolution=resolution,
                        polarisation='x', azimuth=0, inclination=0,isTx=False, ID='RX', timeDelay = 0, timeRemove=tSim)
-else:
-    freq    = 200e6
+else:           #Point Source
+    
     waveID  = waveform('gaussian', amplitude=1,
-                            frequency=freq, identifier='GausDipole')
+                        frequency=freq, identifier='GausDipole')
+    
+    # TX
+    box(xs=antennaPos[0] - steps[0], ys=antennaPos[1] - steps[1], zs= antennaPos[2] - steps[2],
+        xf=antennaPos[0] + steps[0], yf=antennaPos[1] + steps[1], zf= antennaPos[2] + steps[2],
+                    material='free_space' )
+    
+    # RX
+    box(xs=antennaPos[0] - steps[0], ys=antennaPos[1] - steps[1] - dYAntenna, zs= antennaPos[2] - steps[2],
+        xf=antennaPos[0] + steps[0], yf=antennaPos[1] + steps[1] - dYAntenna, zf= antennaPos[2] + steps[2],
+                    material='free_space' )
+
     hertzian_dipole(polarisation='x', f1=antennaPos[0], f2=antennaPos[1], f3=antennaPos[2], identifier=waveID)
     rx(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2])
 
     dirName = dirName + '_' + '%d' % (freq/1e6) + 'MHz'
 
 
-if geomScaling >= 1:
-    geometry_view(0,0,0,dim[0], dim[1], dim[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
+command('title', dirName)
+
+# Geometry view
+if geomScaling > 0:
+    if isSlice:
+        geometry_view(0,0,antennaPos[2],dim[0], dim[1], antennaPos[2] + steps[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
+                dirName, 'n')
+    else:
+        geometry_view(0,0,0,dim[0], dim[1], dim[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
                 dirName, 'n')
 
-    # Logicals
+# Snapshots
 if nSnaps > 0:
     dt = tSim/nSnaps 
     name = 'snap' + dirName +  'dt_%.2e_' %(dt)
-    for i in range(1, nSnaps+1):
-        snapshot(0, 0, antennaPos[2],
-                dim.x, dim.y, antennaPos[2] + steps.z,
-                steps.x, steps.y, steps.z,
-                
-                i*dt, name + str(i))
 
+    if isSlice:
+        name = name + 'isSclice_'
+        for i in range(1, nSnaps+1):
+            snapshot(0, 0, antennaPos[2],
+                    dim.x, dim.y, antennaPos[2] + steps[2],
+                    steps[0], steps[1], steps[2],
+                    i*dt, name + str(i))
+        else:
+            snapshot(0, 0, 0,
+                    dim.x, dim.y, dim.z,
+                    steps[0], steps[1], steps[2],
+                    i*dt, name + str(i))
 
 # NewDir = os.path.join(pathRoot, dirName)
 # try: 
