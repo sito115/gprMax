@@ -1,24 +1,25 @@
-clear, clc, %close all
+clear, clc, close all
 
 %% PARAMETER
 lw            = 1.5;    % line width
 fs            = 18;     % font size
-pathRoot      = 'C:\OneDrive - Delft University of Technology'; % specific pathRoot
+
 
 % Dialog
 prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency', 'Threshold first non-zero value',...
-          'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]',sprintf('Use working directory [0] "%s" or specific pathRoot (for Thomas only) [1] "%s"',pwd, pathRoot)};
-answer = inputdlg(prompt','Define Parameters',[1 150],{'Ex', '4e8', '1e-7', '0', '0','1'});
+          'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]'};
+answer = inputdlg(prompt','Define Parameters',[1 150],{'Ex', '4e8', '1e-7', '0', '0'});
 
 component         = answer{1};
 fcut              = str2double(answer{2});
 nonZeroThresh     = str2double(answer{3});
 normalizationTime = str2double(answer{4});
 normalizationFreq = str2double(answer{5});
-isFolder          = str2double(answer{6});
+isFolder = 0;
 
 % Default folders
 if isFolder
+    pathRoot     = 'C:\OneDrive - Delft University of Technology';
     trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
     figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
 else
@@ -28,19 +29,26 @@ else
 end
 
 
-filenameArray = {'PlaceAntennas_Dist1.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
-                 'PlaceAntennas_Dist2.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
-                 'PlaceAntennas_Dist3.5m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
-                 'PlaceAntennas_Dist4.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
-                 'PlaceAntennas_Dist5.0m_tSim5.00e-08_eps1.00_iA1_iBH0 (2).out',...
-                 'PlaceAntennas_Dist7.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out'};
+        % filenameArray = {'PlaceAntennas_Dist2.0m_tSim2.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist3.0m_tSim3.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist3.5m_tSim2.92e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist4.0m_tSim4.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist5.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',  ...
+%                  'PlaceAntennas_Dist7.0m_tSim7.00e-08_eps1.00_iA1_iBH0.out'  };
+% 
+        filenameArray = {'PlaceAntennas_Dist1.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                         'PlaceAntennas_Dist2.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                         'PlaceAntennas_Dist3.5m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                         'PlaceAntennas_Dist4.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out',...
+                         'PlaceAntennas_Dist5.0m_tSim5.00e-08_eps1.00_iA1_iBH0 (2).out',...
+                         'PlaceAntennas_Dist7.0m_tSim5.00e-08_eps1.00_iA1_iBH0.out'};
 
 %% Start Skript
 allData  = struct;
 
 answer = questdlg(['Start of the program: Which files should be selected? Pre-Selected files' filenameArray], ...
     'Question', ...
-    'Manual','Default (only for Thomas)','Cancel','Manual');
+    'Manual','Default','Cancel','Manual');
 % Handle response
 switch answer
     case 'Manual'
