@@ -4,20 +4,19 @@ import numpy as np
 from gprMax.input_cmd_funcs import *
 
 def generateGradientDomain(dimensions:tuple, dxdydz:tuple ,srPos:tuple, recConfig:tuple, z_end:float, nDepths:int, h_scaling:float,
-                           permitivities:dict, conductivities:dict, isBscan:bool, geomScale:int, nSnaps:int):
+                           permitivities:dict, conductivities:dict, geomScale:int, nSnaps:int):
     '''
     Generates a domain with Free_Space, Followed by a Gradient and Halfspace in gprMax.
 
     dimension        : tuple [1x3] of x,y,z coordiantes of domain size
     dxdydz           : tuple [1x3] of x,y,z spatial discretization
     srPos            : tuple [1x3] of x,y,z coordiantes of source
-    recConfig        : tuple [1x4] containing x,y,z and step size of receivers
+    recConfig        : tuple [1x6] containing x,y,z and step size of receivers for rx_array
     z_end            : start of gradient, gradient/freespace interface
     nDepths          : number of discretizations in gradient layer
     h_scaling        : scaling of gradient layer, which has a thickness of dominant wavelength
     permitivies      : dictionary containing 'halfspace', 'er_0', 'er_h'
     conductivities   : dictionary containing 'halfspace', 'gradient'
-    isBscan          : logical, else A-Scan
     geomScale        : number of scaling step size for geometry file, negative for no file
     nSnaps           : number of snapshots, negative for no snapshot
     '''
@@ -38,7 +37,8 @@ def generateGradientDomain(dimensions:tuple, dxdydz:tuple ,srPos:tuple, recConfi
     # Gradient
     er_0      = permitivities['er_0']         # eps_r at gradient/halfspace interface
     er_h      = permitivities['er_h']         # eps_r at free_space/gradient interface
-    h         = 3e8 / (np.sqrt(0.5* (er_0 + er_h)) * srcFc) * h_scaling   # gradient thickness as thick as wavelength
+    #h         = 3e8 / (np.sqrt(0.5* (er_0 + er_h)) * srcFc) * h_scaling   # gradient thickness as thick as wavelength
+    h         = 0.4
     z_0       = z_end - h                     # start of gradient
 
 
@@ -47,8 +47,9 @@ def generateGradientDomain(dimensions:tuple, dxdydz:tuple ,srPos:tuple, recConfi
     command('title', titleString)
 
     # source waveform
-    SrcIdentifier = waveform('ricker', amplitude=1, frequency=srcFc,
-                            identifier='my_ricker')
+    SrcIdentifier = waveform('ricker', amplitude = 1,
+                            frequency  = srcFc,
+                            identifier = 'my_ricker')
 
     # define materials
     material(permittivity=er_0, conductivity=conductivities['halfspace'],
@@ -71,16 +72,17 @@ def generateGradientDomain(dimensions:tuple, dxdydz:tuple ,srPos:tuple, recConfi
     box(0, z_end, 0, dim.x, dim.y, dim.z, 'free_space')
 
     # TX and RX
-    tx = hertzian_dipole('x',
+    tx = hertzian_dipole('y',
                         srPos[0], srPos[1], srPos[2], 
                         SrcIdentifier)
 
-    rx(recConfig[0], recConfig[1], recConfig[2])
+    rxString = ' '.join(str(value) for value in (recConfig))
+    command('rx_array', rxString)
 
-    # Logicals 
-    if isBscan:
-        rx_steps(dx=recConfig[3])
+    geometryFileName = 'geometryGradient_er0_%derh_%dh_%.2ftSim_%.2enDepths_%d-' % (er_0, er_h, h, tSim, nDepths)
 
+
+    # Logicals
     if nSnaps > 0:
         for i in range(1, nSnaps+1):
             snapshot(0, 0, 0,
@@ -91,9 +93,10 @@ def generateGradientDomain(dimensions:tuple, dxdydz:tuple ,srPos:tuple, recConfi
     if geomScale > 0:
         # save geometry file with suffix
         timestr          = time.strftime("%y%m%d-%H%M")
-        geometryFileName = 'geometryGradient_er0_%derh_%dh_%.2ftSim_%.2enDepths_%d-' % (er_0, er_h, h, tSim, nDepths)
         geometry_view(0, 0, 0, dim.x, dim.y, dim.z,spatial_step.x * geomScale, spatial_step.y * geomScale,
-                      geomScale * spatial_step.z, geometryFileName, 'n')                
+                      geomScale * spatial_step.z, geometryFileName, 'n')
+
+    return geometryFileName                          
 
 
  

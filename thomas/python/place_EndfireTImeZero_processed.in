@@ -1,0 +1,72 @@
+#time_window: 1.2e-07
+#pml_cells: 40
+#dx_dy_dz: 0.01 0.01 0.01
+#domain: 1.7 4.4 1.2
+#material: 80 0 1 0 waterBoreHole
+#material: 1 0 1 0 airBoreHole
+#material: 12.5 0 1 0 satGravel
+#material: 5 0 1 0 unsatGravel
+#box: 0 0 0 1.7 4.4 1.2 satGravel 
+#cylinder: 0 3.7 0.6 1.7 3.7 0.6 0.05 waterBoreHole 
+#cylinder: 0 0.7 0.6 1.7 0.7 0.6 0.05 waterBoreHole 
+#material: 20 0.0001 1 0 resistorTX
+#material: 1 0 1 0 airTX
+#material: 4 1e-10 1 0 insulatorTX
+#material: 1 0 2.35 0 plasticCaseTX
+#cylinder: 0.55 3.7 0.6 1.15 3.7 0.6 0.02 insulatorTX 
+#edge: 0.57 3.7 0.6 1.05 3.7 0.6 pec
+#cylinder: 0.77 3.7 0.6 0.76 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.75 3.7 0.6 0.74 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.73 3.7 0.6 0.72 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.71 3.7 0.6 0.7 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.69 3.7 0.6 0.68 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.67 3.7 0.6 0.66 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.65 3.7 0.6 0.64 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.63 3.7 0.6 0.62 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.61 3.7 0.6 0.6 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.59 3.7 0.6 0.58 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.85 3.7 0.6 0.86 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.87 3.7 0.6 0.88 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.89 3.7 0.6 0.9 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.91 3.7 0.6 0.92 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.93 3.7 0.6 0.94 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.95 3.7 0.6 0.96 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.97 3.7 0.6 0.98 3.7 0.6 0.01 resistorTX 
+#cylinder: 0.99 3.7 0.6 1 3.7 0.6 0.01 resistorTX 
+#cylinder: 1.01 3.7 0.6 1.02 3.7 0.6 0.01 resistorTX 
+#cylinder: 1.03 3.7 0.6 1.04 3.7 0.6 0.01 resistorTX 
+#edge: 0.8 3.7 0.6 0.82 3.7 0.6 airTX
+#cylinder: 0.8 3.7 0.6 0.82 3.7 0.6 0.01 airTX 
+#waveform: gaussian 1 92000000.0 GausTX
+#voltage_source: x 0.81 3.7 0.6 0 GausTX 0 1.2e-07
+#material: 20 0.0001 1 0 resistorRX
+#material: 1 0 1 0 airRX
+#material: 4 1e-10 1 0 insulatorRX
+#material: 1 0 2.35 0 plasticCaseRX
+#cylinder: 0.55 0.7 0.6 1.15 0.7 0.6 0.02 insulatorRX 
+#edge: 0.57 0.7 0.6 1.05 0.7 0.6 pec
+#cylinder: 0.77 0.7 0.6 0.76 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.75 0.7 0.6 0.74 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.73 0.7 0.6 0.72 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.71 0.7 0.6 0.7 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.69 0.7 0.6 0.68 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.67 0.7 0.6 0.66 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.65 0.7 0.6 0.64 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.63 0.7 0.6 0.62 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.61 0.7 0.6 0.6 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.59 0.7 0.6 0.58 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.85 0.7 0.6 0.86 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.87 0.7 0.6 0.88 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.89 0.7 0.6 0.9 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.91 0.7 0.6 0.92 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.93 0.7 0.6 0.94 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.95 0.7 0.6 0.96 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.97 0.7 0.6 0.98 0.7 0.6 0.01 resistorRX 
+#cylinder: 0.99 0.7 0.6 1 0.7 0.6 0.01 resistorRX 
+#cylinder: 1.01 0.7 0.6 1.02 0.7 0.6 0.01 resistorRX 
+#cylinder: 1.03 0.7 0.6 1.04 0.7 0.6 0.01 resistorRX 
+#edge: 0.8 0.7 0.6 0.82 0.7 0.6 airRX
+#cylinder: 0.8 0.7 0.6 0.82 0.7 0.6 0.01 airRX 
+#rx: 0.81 0.7 0.6 
+#title: Dist3.00m_tSim1.20e-07_iA1_iBH1-satGravel-waterBoreHole
+#geometry_view: 0 0 0.6 1.7 4.4 0.61 0.01 0.01 0.01 Dist3.00m_tSim1.20e-07_iA1_iBH1-satGravel-waterBoreHole n

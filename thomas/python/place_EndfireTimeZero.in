@@ -5,19 +5,19 @@ import sys
 from thomas.python.generateRLFLA import antenna_like_RLFLA
 from gprMax.input_cmd_funcs import *
 
-# sys.path.append("C:\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\\thomas")
-# sys.path.append("C:\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\gprMax")
 
 print(sys.path)
 
-isAntenna   = True         # Test for RLFLA and Dipole
-isBorehole  = True          # Is Borehole
-nSnaps      = -1            # Number of Snapshots
-geomScaling = 1             # Scaling Step Size for GeomView
-isSlice     = 1 
-environ     = 'unsatGravel'
-boreholeEnv = 'waterBoreHole'
-extraInf    = ''
+###### Parameter
+isAntenna   = True              # Test for RLFLA and Dipole
+isBorehole  = True              # Is Borehole, else homogeneous environment
+nSnaps      = 150                # Number of Snapshots
+geomScaling = 1                 # Scaling Step Size for GeomView
+isSlice     = 1                 # True for geometry file to be a slice through the endfire plance [2D], else it is the whole domain [3D]
+environ     = 'unsatGravel'       # for borehole ['satGravel', 'unsatGravel']
+boreholeEnv = 'waterBoreHole'   # for borehole ['waterBoreHole', 'airBoreHole']
+extraInf    = ''                # extra information in title
+eps_r       = 1                 # Homo environment (isBorehole == 0)
 
 if isBorehole:
     tSim = time_window(1.2e-7)
@@ -26,22 +26,21 @@ else:
     tSim = time_window(5e-8)
     # tSim = time_window(3 * dYAntenna * np.sqrt(eps_r) /3e8) # Time window is 3x travel distance between TX-RX
 
-dYAntenna   = 3        # Distance betwenn TX and RX in y direction
+dYAntenna   = 5        # Distance betwenn TX and RX in y direction
 resolution  = 0.01      # uniform spatial step 
 
 freq    = 140e6        # for point dipole
-nPML    = 40
+nPML    = 40           # number of PML cells
 command('pml_cells', nPML)    # nPML Cells
 
-
-eps_r      = 1    # Homo environment
+###### END Parameter
 
 steps = dx_dy_dz(resolution, resolution, resolution)
-dim   = domain(x=0.9 +2*nPML*resolution , y=dYAntenna + 0.6 + 2*nPML*resolution, z=0.4 + 2*nPML*resolution)
-
+dim   = domain(x=0.9 +2*nPML*resolution , y=dYAntenna + 0.6 + 2*nPML*resolution,
+               z=0.4 + 2*nPML*resolution)
 antennaPos = (dim[0]/2-0.6/2+0.26, (dim[1]+dYAntenna)/2, dim[2]/2 )  # Scale Placing of RLFLA
 
-
+# Borehole environment
 if isBorehole:
 
     rBoreHole = 0.05
@@ -63,16 +62,17 @@ if isBorehole:
     cylinder(x1=0, y1=antennaPos[1]-dYAntenna,z1=antennaPos[2],
              x2=dim[0], y2=antennaPos[1]-dYAntenna,z2=antennaPos[2],
              radius=rBoreHole, material=boreholeEnv)
-
+    # title string
     dirName = 'Dist%.2fm_tSim%.2e_iA%d_iBH%d-%s-%s%s' %(dYAntenna, tSim, isAntenna, isBorehole, environ, boreholeEnv,extraInf)
-else:
+else: # Homogeneous environment
 
     material(permittivity=eps_r, conductivity=0, permeability = 1, magconductivity = 0, name= 'eps_r' + str(eps_r))
-    # Homogeneous environment
+
     box(xs= 0, ys= 0, zs=  0,
         xf=dim[0], yf=dim[1] , zf=dim[2]  
         ,material='eps_r' + str(eps_r))
-
+    
+    # title string
     dirName = 'PlaceAntennas_Dist%.1fm_tSim%.2e_eps%.2f_iA%d_iBH%d' %(dYAntenna, tSim, eps_r, isAntenna, isBorehole)
 
 
@@ -107,10 +107,10 @@ command('title', dirName)
 
 # Geometry view
 if geomScaling > 0:
-    if isSlice:
+    if isSlice: # geometry view through endireplane [2D]
         geometry_view(0,0,antennaPos[2],dim[0], dim[1], antennaPos[2] + steps[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
                 dirName, 'n')
-    else:
+    else: # geometry view through whole domain [3D]
         geometry_view(0,0,0,dim[0], dim[1], dim[2], geomScaling*steps[0], geomScaling*steps[1], geomScaling*steps[2],
                 dirName, 'n')
 
@@ -119,25 +119,20 @@ if nSnaps > 0:
     dt = tSim/nSnaps 
     name = 'snap' + dirName +  'dt_%.2e_' %(dt)
 
-    if isSlice:
+    if isSlice: # geometry view through endireplane [2D]
         name = name + 'isSclice_'
         for i in range(1, nSnaps+1):
             snapshot(0, 0, antennaPos[2],
                     dim.x, dim.y, antennaPos[2] + steps[2],
                     steps[0], steps[1], steps[2],
                     i*dt, name + str(i))
-        else:
+        else: # geometry view through whole domain [3D]
             snapshot(0, 0, 0,
                     dim.x, dim.y, dim.z,
                     steps[0], steps[1], steps[2],
                     i*dt, name + str(i))
-
-# NewDir = os.path.join(pathRoot, dirName)
-# try: 
-#     os.mkdir(NewDir) 
-# except OSError as error: 
-#     print(error)  
-# print('#output_dir: results')
+            
 
 
+###################
 #end_python:
