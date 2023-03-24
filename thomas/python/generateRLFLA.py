@@ -28,7 +28,7 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str, azimuth:floa
     antennaLength  = 0.60   # total length (originally 1.21m, but cut-off due to performance enhancement)
     radiusAn       = 0.02   # radius antenna
 
-    resistorLength = 0.2     # from feeding point to the left and right (originally 0.24m), cut-off due to performance)
+    resistorLength = 0.20     # from feeding point to the left and right (originally 0.24m), cut-off due to performance)
     lengthRes      = 0.01    # length of resistor
     nResistor      = 10      # number of resistors at each side of feeding point
 
@@ -52,8 +52,8 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str, azimuth:floa
     material(permittivity=20, conductivity=0.1e-3,
              permeability=1, magconductivity=0, name='resistor' + ID)
 
-    material(permittivity=1, conductivity=0,
-            permeability=1, magconductivity=0, name='air' + ID)         
+    # material(permittivity=1, conductivity=0,
+    #         permeability=1, magconductivity=0, name='air' + ID)         
 
     material(permittivity=4, conductivity=1e-10,
              permeability=1, magconductivity=0, name='insulator' + ID)
@@ -102,12 +102,12 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str, azimuth:floa
     # Feeding Point 
     edge(xs=x-resolution, ys=y, zs=z,           # add deltaXRes to y2 due to discetization error with 0.01m
          xf=x+resolution, yf=y, zf=z,
-            material='air' + ID)
+            material='free_space')
 
 
-    cylinder(x1=x-resolution, y1=y, z1=z,
-             x2=x+resolution, y2=y, z2=z,
-             radius=resolution, material='air' + ID)
+    # cylinder(x1=x-resolution, y1=y, z1=z,
+    #          x2=x+resolution, y2=y, z2=z,
+    #          radius=resolution, material='air' + ID)
 
     
     if isTx:    # Source
