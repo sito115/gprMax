@@ -6,12 +6,12 @@ from thomas.python.generateRLFLA import antenna_like_RLFLA
 from gprMax.input_cmd_funcs import *
 
 
-print(sys.path)
+# print(sys.path)
 
 ###### Parameter
 isAntenna   = True              # Test for RLFLA and Dipole
-isBorehole  = True              # Is Borehole, else homogeneous environment
-nSnaps      = 150                # Number of Snapshots
+isBorehole  = False              # Is Borehole, else homogeneous environment
+nSnaps      = -1                # Number of Snapshots
 geomScaling = 1                 # Scaling Step Size for GeomView
 isSlice     = 1                 # True for geometry file to be a slice through the endfire plance [2D], else it is the whole domain [3D]
 environ     = 'unsatGravel'       # for borehole ['satGravel', 'unsatGravel']
@@ -20,10 +20,10 @@ extraInf    = ''                # extra information in title
 eps_r       = 1                 # Homo environment (isBorehole == 0)
 
 if isBorehole:
-    tSim = time_window(1.2e-7)
+    tSim = time_window(1e-7)
     # tSim = time_window(2.5 * dYAntenna * np.sqrt(15) /3e8) # Time window is 3x travel distance between TX-RX
 else:
-    tSim = time_window(5e-8)
+    tSim = time_window(1e-7)
     # tSim = time_window(3 * dYAntenna * np.sqrt(eps_r) /3e8) # Time window is 3x travel distance between TX-RX
 
 dYAntenna   = 5        # Distance betwenn TX and RX in y direction
@@ -73,15 +73,15 @@ else: # Homogeneous environment
         ,material='eps_r' + str(eps_r))
     
     # title string
-    dirName = 'PlaceAntennas_Dist%.1fm_tSim%.2e_eps%.2f_iA%d_iBH%d' %(dYAntenna, tSim, eps_r, isAntenna, isBorehole)
+    dirName = 'PlaceAntennas_Dist%.1fm_tSim%.2e_eps%.2f_iA%d_iBH%d%s' %(dYAntenna, tSim, eps_r, isAntenna, isBorehole,extraInf)
 
 
 if isAntenna:   #RLFLA
     antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1], z=antennaPos[2], resolution=resolution,
-                       polarisation='x', azimuth=0, inclination=0,isTx=True, ID='TX', timeDelay=0, timeRemove=tSim)
+                       polarisation='x',isTx=True, ID='TX', timeDelay=0, timeRemove=tSim)
     
     antenna_like_RLFLA(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2],resolution=resolution,
-                       polarisation='x', azimuth=0, inclination=0,isTx=False, ID='RX', timeDelay = 0, timeRemove=tSim)
+                       polarisation='x',isTx=False, ID='RX', timeDelay = 0, timeRemove=tSim)
 else:           #Point Source
     
     waveID  = waveform('gaussian', amplitude=1,
@@ -97,8 +97,16 @@ else:           #Point Source
         xf=antennaPos[0] + steps[0], yf=antennaPos[1] + steps[1] - dYAntenna, zf= antennaPos[2] + steps[2],
                     material='free_space' )
 
-    hertzian_dipole(polarisation='x', f1=antennaPos[0], f2=antennaPos[1], f3=antennaPos[2], identifier=waveID)
+    hertzian_dipole(polarisation='x', f1=antennaPos[0],
+                    f2=antennaPos[1], f3=antennaPos[2], identifier=waveID)
     rx(x=antennaPos[0], y=antennaPos[1]-dYAntenna, z=antennaPos[2])
+
+
+    # waveformID  = waveform(shape='gaussian', amplitude=1,
+    #                     frequency=freq, identifier='GausVoltage')
+    # voltage_source(polarisation='x', f1=antennaPos[0], f2=antennaPos[1],
+    #                     f3= antennaPos[2], resistance = 0,
+    #                     identifier= waveformID, t0=0, t_remove = tSim)
 
     dirName = dirName + '_' + '%d' % (freq/1e6) + 'MHz'
 
@@ -116,7 +124,9 @@ if geomScaling > 0:
 
 # Snapshots
 if nSnaps > 0:
-    dt = tSim/nSnaps 
+    # dt = tSim/nSnaps 
+    # set dt to 0.5e-9
+    dt = 0.4e-9
     name = 'snap' + dirName +  'dt_%.2e_' %(dt)
 
     if isSlice: # geometry view through endireplane [2D]
