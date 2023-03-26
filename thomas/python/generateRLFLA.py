@@ -40,7 +40,7 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str,
 
    # Resistors spacing
     geometries['deltaRes']  = (geometries['resistorLength'] -  geometries['lengthRes'] * nResistor) / nResistor   
-    geometries['delta']     = (geometries['lengthWire'] - geometries['resistorLength']) 
+    geometries['delta']     = 0.01 + resolution # (geometries['lengthWire'] - geometries['resistorLength']) 
 
 
     if polarisation == 'x': 
@@ -81,9 +81,14 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str,
             radius=radiusAn, material='insulator' + ID)
        
     #  Wire   
-    edge(xs=x-Xgeom['lengthWire'], ys=y-Ygeom['lengthWire'], zs=z-Zgeom['lengthWire'],           # add deltaXRes to y2 due to discetization error with 0.01m
-         xf=x+Xgeom['lengthWire'], yf=y+Ygeom['lengthWire'], zf=z+Zgeom['lengthWire'],
+    edge(xs=x-Xgeom['cellSize']-Xgeom['lengthWire'], ys=y-Ygeom['cellSize']-Ygeom['lengthWire'], zs=z-Zgeom['cellSize']-Zgeom['lengthWire'],           # add deltaXRes to y2 due to discetization error with 0.01m
+         xf=x+Xgeom['cellSize']+Xgeom['lengthWire'], yf=y+Ygeom['cellSize']+Ygeom['lengthWire'], zf=z+Zgeom['cellSize']+Zgeom['lengthWire'],
          material='pec')
+
+    # cylinder(x1=x-Xgeom['lengthWire'], y1=y-Ygeom['lengthWire'], z1=z-Zgeom['lengthWire'],
+    #     x2=x+Xgeom['lengthWire']-Xgeom['lengthWire'], y2=y+Ygeom['lengthWire']-Ygeom['lengthWire'],
+    #     z2=z+Zgeom['lengthWire']-Zgeom['lengthWire'],
+    #     radius=radiusRes, material='pec')     
 
     # Place resistors
     dx = Xgeom['delta']
@@ -107,6 +112,12 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str,
     edge(xs=x-Xgeom['cellSize'], ys=y-Ygeom['cellSize'], zs=z-Zgeom['cellSize'],           # add deltaXRes to y2 due to discetization error with 0.01m
          xf=x+Xgeom['cellSize'], yf=y+Ygeom['cellSize'], zf=z+Zgeom['cellSize'],
          material='free_space')
+
+    # cylinder(x1=x-Xgeom['cellSize'], y1=y-Ygeom['cellSize'], z1=z-Zgeom['cellSize'],
+    #     x2=x+Xgeom['cellSize']-Xgeom['cellSize'], y2=y+Ygeom['cellSize']-Ygeom['cellSize'],
+    #     z2=z+Zgeom['cellSize']-Zgeom['cellSize'],
+    #     radius=radiusRes, material='free_space')  
+
 
     if isTx:    # Source
         waveformID  = waveform(shape='gaussian', amplitude=1,
