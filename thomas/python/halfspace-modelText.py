@@ -4,9 +4,13 @@ import sys
 import io
 from generateRLFLAText import antenna_like_RLFLAText
 
-fid = open('dummy.in', 'w')
+saveFolder  = 'ProcessedFiles'
+current_dir = 'C:/OneDrive - Delft University of Technology/3. Semester - Studienunterlagen/Thesis/gprMaxFolder/gprMax'
+saveFolder  = os.path.join(current_dir, saveFolder)
 
 # Model Settings
+nameIdentifier = ''  # to be included in title and geometry file
+
 isRLFLA     = True   # use RLFLA or point antennae
 is3D        = True   # use 3D Model or 2D [1 cell in y direction]
 isGradient  = False  # include gradient in model
@@ -15,29 +19,32 @@ isSlice     = True  # use 2D slide for movies and geometry through feeding point
 nSnaps      = 100
 isGeometry  = True
 
-nameIdentifier = ''  # to be included in title and geometry file
-
-# Resolution / Grid Size
-resolutionX  = 0.01
-resolutionY  = 0.01
-resolutionZ  = 0.01
-
-fid.write('#dx_dy_dz: %f %f %f\n' %(resolutionX,resolutionY,resolutionZ))
-
-
 # Materials
-er_0            = 12.5       
-er_halfspace    = 5 
+er_0            = 5     
+er_halfspace    = 5
 h               = 0.5
-               
-# Antenna Position
-dx              = 6.0  # [m] TX-RX distance
-buffer          = 0.4 # [m] buffer from each side of x-direction
-nCellAboveInter = 2  # [m] antennas are placed above air soil interface  
+
+#Time
+tSim = 1e-7
+tSnap = tSim
+
+
+
+airSoilInterface  = 2.0    # air - halfspace interface
+gradientStart     = airSoilInterface -0.5
 
 # nRX
-nRX            = 1
-dxRX           = 0.2
+nRX            = 9
+dxRX           = 0.5
+
+
+# Antenna Position
+dx              = 6.0   # [m] TX-RX distance
+buffer          = 0.4   # [m] buffer from each side of x-direction
+nCellAboveInter = 5     # [m] antennas are placed above air soil interface  
+
+
+
 
 # Antenna Parameters
 antLength    = 0.6  # [m]
@@ -45,9 +52,15 @@ antFeedPoint = 0.26 # [m] from bottom of antenna
 polari       = 'y'  # Polarisation       
 
 
-airSoilInterface = 2.0    # air - halfspace interface
+# Resolution / Grid Size
+resolutionX  = 0.01
+resolutionY  = 0.01
+resolutionZ  = 0.01
 
-freqDipole       = 200e6  # Frequency of point source
+
+assert gradientStart < airSoilInterface, "Gradient can not be above air soil interface"
+
+freqDipole       = 140e6  # Frequency of point source
 nPml             = 20     # number of PML cells from each side of domain 
 
 # Domain Geometries
@@ -55,66 +68,88 @@ xDimNet = 2*buffer + dx
 yDimNet = 1.5
 zDimNet = 3.0
 
-xDimAll = 2*buffer + dx + 2*nPml*resolutionX
-yDimAll = 1.5 + 2*nPml*resolutionY
-zDimAll = 3.0 + 2*nPml*resolutionZ
+xDimAll = xDimNet + 2*nPml*resolutionX
+yDimAll = yDimNet + 2*nPml*resolutionY
+zDimAll = zDimNet + 2*nPml*resolutionZ
 
+
+# write FileName
+dirName = 'HaSp_dx%.1fm_eps%.1f_' %(dx,er_halfspace)
+
+if er_0 > er_halfspace and isGradient:
+    dirName += '--er0%.1f_h%.1fm' %(er_0, h)
+elif er_0 < er_halfspace and isGradient:
+    dirName += '++er0%.1f_h%.1fm' %(er_0, h)
+else:
+    dirName += '00'
+
+if isRLFLA:
+    dirName += 'RLFLA'
+else:
+    dirName += 'InfDip'
+
+# Set Directory and Title name
+if nRX > 1:
+    dirName += 'nRX%d_dxRX%.2fm' %(nRX, dxRX)
+if gradientStart != airSoilInterface:
+    dirName += 'Goffset%.1fm' % (airSoilInterface - gradientStart)
+
+dirName += nameIdentifier 
+
+
+fileName = os.path.join(saveFolder, dirName + '.in')
+fid = open(fileName, 'w')
 
 ########## Start of Model ##########  
+fid.write('#dx_dy_dz: %.2f %.2f %.2f\n' %(resolutionX,resolutionY,resolutionZ))
+
 if is3D:
-    fid.write('#domain: %f %f %f\n' %( xDimAll,
-                                       yDimAll,
-                                       zDimAll))
+    fid.write('#domain: %.2f %.2f %.2f\n' %( xDimAll,
+                                             yDimAll,
+                                             zDimAll))
 
-    TXPos = (nPml*resolutionX + buffer,       0.5*xDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
-    RXPos = (nPml*resolutionX + buffer + dx,  0.5*xDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
+    TXPos = (nPml*resolutionX + buffer,       0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
+    RXPos = (nPml*resolutionX + buffer + dx,  0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
 
+    fid.write('#pml_cells: %d\n' %(nPml))
 else:
-    fid.write('#domain: %f %f %f\n' %(xDimAll,
-                                      resolutionY,
-                                      zDimAll))
+    yDimAll = resolutionY
+    fid.write('#domain: %.2f %.2f %.2f\n' %(xDimAll,
+                                            yDimAll,
+                                            zDimAll))
 
     TXPos = (nPml*resolutionX + buffer,      0, airSoilInterface + nCellAboveInter * resolutionZ)
     RXPos = (nPml*resolutionX + buffer + dx, 0, airSoilInterface + nCellAboveInter * resolutionZ)
 
+    fid.write('#pml_cells: %d %d %d %d %d %d\n' %(nPml, 0, nPml, nPml, 0, nPml))
+
 # Time & PML cells
-tSim = 1e-7
 fid.write('#time_window: %e\n' %(tSim))
-fid.write('#pml_cells: %d\n' %(nPml))
+
 
 # Halfspace
-fid.write('#material: %f %f %f %f %s\n' %(er_halfspace, 0, 1, 0, 'half_space'))
+fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_halfspace, 0, 1, 0, 'half_space'))
 
 
 # Boxes
-fid.write('#box: %f %f %f %f %f %f %s\n' % (0,0,airSoilInterface,
+fid.write('#box: %.2f %.2f %.2f %.2f %.2f %.2f %s\n' % (0,0,airSoilInterface,
                                           xDimAll, yDimAll, zDimAll, 'free_space'))
-fid.write('#box: %f %f %f %f %f %f %s\n' % (0,0,0,
+fid.write('#box: %.2f %.2f %.2f %.2f %.2f %.2f %s\n' % (0,0,0,
                                           xDimAll, yDimAll, airSoilInterface, 'half_space'))
-
-dirName = 'HalfSpace_dx%.1fm_eps_%.1f_i3D%d' %(dx,er_halfspace,is3D)
 
 # Gradient
 if isGradient:
     nLayers     = int(np.round(h / resolutionZ) - 1)         # returns the nearest lower integer result
     deltaEr     = (er_halfspace - er_0) / nLayers
 
-    dirName += '_er0_%.1f_h%.1fm' %(er_0, h)
+    
 
     for iLayer in range(nLayers):
-        fid.write('#material: %f %f %f %f %s\n' %(er_0 + iLayer*deltaEr, 0, 1, 0, 'layer' + str(iLayer+1)))
+        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0 + iLayer*deltaEr, 0, 1, 0, 'layer' + str(iLayer+1)))
 
-        fid.write('#box: %f %f %f %f %f %f %s\n' %(0,0, airSoilInterface - (iLayer + 1)*resolutionZ,
-                                                xDimAll, yDimAll, airSoilInterface - iLayer * resolutionZ,
+        fid.write('#box: %.2f %.2f %.2f %.2f %.2f %.2f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZ,
+                                                xDimAll, yDimAll, gradientStart - iLayer * resolutionZ,
                                                 'layer' + str(iLayer+1)))
-
-    # update names
-    if er_0 > er_halfspace:
-        dirName += 'Decrease'
-    elif er_0 < er_halfspace:
-        dirName += 'Increase'
-    else:
-        dirName += 'NoGrad'
 
 #### Y-polar
 if isRLFLA:
@@ -122,8 +157,7 @@ if isRLFLA:
                     resolution=resolutionY, polarisation=polari,
                     ID='RLFLA-TX', isTx=True, fid=fid)
     
-    dirName += 'RLFLA'
- 
+    
     for iRX in range(nRX): # RX
             antenna_like_RLFLAText(x=RXPos[0]-iRX*dxRX,y=RXPos[1],z=RXPos[2],
                 resolution=resolutionY, polarisation=polari,
@@ -131,55 +165,45 @@ if isRLFLA:
 
 
 else:
-    fid.write('#waveform: gaussian %f %f %s\n' % (1, freqDipole, 'GausDipole'))
-    fid.write('#hertzian_dipole: %s %f %f %f %s\n' %(polari,TXPos[0],TXPos[1],TXPos[2],
+    fid.write('#waveform: gaussian %.2f %.2f %s\n' % (1, freqDipole, 'GausDipole'))
+    fid.write('#hertzian_dipole: %s %.2f %.2f %.2f %s\n' %(polari,TXPos[0],TXPos[1],TXPos[2],
                                                           'GausDipole'))
 
     for iRX in range(nRX): # RX
-        fid.write('rx: %f %f %f\n' %(RXPos[0]-iRX*dxRX,
-                                   RXPos[1],
-                                   RXPos[2]))
+        fid.write('#rx: %.2f %.2f %.2f\n' %(RXPos[0]-iRX*dxRX,
+                                            RXPos[1],
+                                            RXPos[2]))
 
-    dirName += 'InfDip'
-
-
-# Set Directory and Title name
-if nRX > 1:
-    dirName += 'nRX%d_dxRX%.2fm' %(nRX, dxRX)
-
-dirName += nameIdentifier 
 fid.write('#title: %s\n' %(dirName))
 
 # Geometry
 if isGeometry:
     if isSlice:
-        fid.write('#geometry_view: %f %f %f %f %f %f %f %f %f %s n\n' %(
+        fid.write('#geometry_view: %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %s n\n' %(
                 0,TXPos[1],0,xDimAll, TXPos[1]+resolutionY, zDimAll,
                 resolutionX, resolutionY, resolutionZ, dirName))
 
     else:
-        fid.write('#geometry_view: %f %f %f %f %f %f %f %f %f %s n\n' %(
+        fid.write('#geometry_view: %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %s n\n' %(
                 0,0,0,xDimAll, yDimAll, zDimAll,
                 resolutionX, resolutionY, resolutionZ, dirName))
 
 # Snapshots
 if nSnaps > 0:
-    dt = tSim/nSnaps 
+    dt = tSnap/nSnaps 
     # set dt to 0.5e-9
-    name = 'snap' + dirName + 'dt_%.2e_' %(dt)
-    if isSlice:
+    name = dirName + 'dt%.1e_' %(dt)
+    if isSlice and is3D:
         for i in range(1, nSnaps+1):
-            fid.write('#snapshot: %f %f %f %f %f %f %f %f %f %f %s' %(
-                        0, RXPos[1], 0, xDimAll, RXPos[1] + resolutionY, zDimAll,  i*dt,
-                        resolutionX,resolutionY,resolutionZ, name + str(i) ))
+            fid.write('#snapshot: %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %e %s\n' %(
+                        0, RXPos[1], 0, xDimAll, RXPos[1] + resolutionY, zDimAll,  
+                        resolutionX,resolutionY,resolutionZ,i*dt, name + str(i) ))
     else:
         for i in range(1, nSnaps+1):
-            fid.write('#snapshot: %f %f %f %f %f %f %f %f %f %f %s' %(
-                        0, 0, 0, xDimAll, yDimAll, zDimAll,  i*dt,
-                        resolutionX,resolutionY,resolutionZ, name + str(i) ))
+            fid.write('#snapshot: %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %e %s\n' %(
+                        0, 0, 0, xDimAll, yDimAll, zDimAll,  
+                        resolutionX,resolutionY,resolutionZ, i*dt, name + str(i) ))
 
 fid.close()
-os.rename('dummy.in', )
-
+print(fileName)
 ###################
-#end_python:

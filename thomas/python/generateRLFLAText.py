@@ -19,15 +19,19 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
     '''
 
 
-    geometries = {'antennaLength':0.60, 'deltaRes':0.01, 'lengthRes':0.01, 'lengthWire':0.24,
-                  'posFeedSource':0.26, 'cellSize':resolution}
+    geometries = {'antennaLength'   :0.60,
+                  'deltaRes'        :0.01,
+                  'lengthRes'       :0.01,
+                  'lengthWire'      :0.24,
+                  'posFeedSource'   :0.26,
+                  'cellSize'        :resolution}
 
 
     # Source Frequency and waveform
-    radiusAn       = 0.02   # radius antenna
-    radiusRes      = 0.01
+    radiusAn       = 0.03   # radius antenna
+    radiusRes      = 0.02
     centerFreq     = 92e6
-    resSrc         = 0
+    resSrc         = 0       # resistance of voltage -> hard source
     nResistor      = 10      # number of resistors at each side of feeding point
  
     Xgeom = {}
@@ -56,7 +60,7 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
 #     this PEC is surrounded by an insulation having εr = 4 and σ = 10−7 mS/m as reported by Lampe and Holliger [91].
 
     # Materials
-    fid.write('#material: 4 1e-3  1 0 resistor%s\n' %(ID) )
+    fid.write('#material: 4 1e-4  1 0 resistor%s\n' %(ID) )
     fid.write('#material: 4 1e-10 1 0 insulator%s\n' %(ID) )
 
 
@@ -90,22 +94,22 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
 
 
         fid.write('#cylinder: %f %f %f %f %f %f %f resistor%s\n' %(x-Xgeom['cellSize']-Xgeom['lengthWire']+iRes*(Xgeom['deltaRes']+Xgeom['lengthRes']),
-                                                                y-Ygeom['cellSize']-Ygeom['lengthWire']+iRes*(Ygeom['deltaRes']+Ygeom['lengthRes']),
-                                                                z-Zgeom['cellSize']-Zgeom['lengthWire']+iRes*(Zgeom['deltaRes']+Zgeom['lengthRes']),
-                                                                x-Xgeom['cellSize']-Xgeom['lengthWire']+iRes*(Xgeom['deltaRes']+Xgeom['lengthRes'])+Xgeom['lengthRes'],
-                                                                y-Ygeom['cellSize']-Ygeom['lengthWire']+iRes*(Ygeom['deltaRes']+Ygeom['lengthRes'])+Ygeom['lengthRes'],
-                                                                z-Zgeom['cellSize']-Zgeom['lengthWire']+iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])+Zgeom['lengthRes'],
-                                                                radiusRes,
-                                                                ID))
+                                                                   y-Ygeom['cellSize']-Ygeom['lengthWire']+iRes*(Ygeom['deltaRes']+Ygeom['lengthRes']),
+                                                                   z-Zgeom['cellSize']-Zgeom['lengthWire']+iRes*(Zgeom['deltaRes']+Zgeom['lengthRes']),
+                                                                   x-Xgeom['cellSize']-Xgeom['lengthWire']+iRes*(Xgeom['deltaRes']+Xgeom['lengthRes'])+Xgeom['lengthRes'],
+                                                                   y-Ygeom['cellSize']-Ygeom['lengthWire']+iRes*(Ygeom['deltaRes']+Ygeom['lengthRes'])+Ygeom['lengthRes'],
+                                                                   z-Zgeom['cellSize']-Zgeom['lengthWire']+iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])+Zgeom['lengthRes'],
+                                                                   radiusRes,
+                                                                   ID))
   
         fid.write('#cylinder: %f %f %f %f %f %f %f resistor%s\n'   %(x+Xgeom['cellSize']+Xgeom['lengthWire']-iRes*(Xgeom['deltaRes']+Xgeom['lengthRes'])-Xgeom['lengthRes'],
-                                                                y+Ygeom['cellSize']+Ygeom['lengthWire']-iRes*(Ygeom['deltaRes']+Ygeom['lengthRes'])-Ygeom['lengthRes'],
-                                                                z+Zgeom['cellSize']+Zgeom['lengthWire']-iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])-Zgeom['lengthRes'],
-                                                                x+Xgeom['cellSize']+Xgeom['lengthWire']-iRes*(Xgeom['deltaRes']+Xgeom['lengthRes']),
-                                                                y+Ygeom['cellSize']+Ygeom['lengthWire']-iRes*(Ygeom['deltaRes']+Ygeom['lengthRes']),
-                                                                z+Zgeom['cellSize']+Zgeom['lengthWire']-iRes*(Zgeom['deltaRes']+Zgeom['lengthRes']),
-                                                                radiusRes,
-                                                                ID))
+                                                                     y+Ygeom['cellSize']+Ygeom['lengthWire']-iRes*(Ygeom['deltaRes']+Ygeom['lengthRes'])-Ygeom['lengthRes'],
+                                                                     z+Zgeom['cellSize']+Zgeom['lengthWire']-iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])-Zgeom['lengthRes'],
+                                                                     x+Xgeom['cellSize']+Xgeom['lengthWire']-iRes*(Xgeom['deltaRes']+Xgeom['lengthRes']),
+                                                                     y+Ygeom['cellSize']+Ygeom['lengthWire']-iRes*(Ygeom['deltaRes']+Ygeom['lengthRes']),
+                                                                     z+Zgeom['cellSize']+Zgeom['lengthWire']-iRes*(Zgeom['deltaRes']+Zgeom['lengthRes']),
+                                                                     radiusRes,
+                                                                     ID))
 
         
     # Feeding Point 
