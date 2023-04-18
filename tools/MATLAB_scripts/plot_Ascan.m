@@ -11,7 +11,7 @@ figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
 
 stopCrit = 3;
 
-Traces2Plot = 1;
+Traces2Plot = [];
 
 [filename, pathname] = uigetfile([fullfile(pathRoot,trdSemester) '\*.out'], 'Select gprMax A-scan output file to plot');
 fullfilename = strcat(pathname, filename);

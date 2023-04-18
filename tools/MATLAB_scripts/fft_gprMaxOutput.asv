@@ -48,7 +48,7 @@ fields.Hx = zeros(header.iterations, header.nrx);
 fields.Hy = zeros(header.iterations, header.nrx);
 fields.Hz = zeros(header.iterations, header.nrx);
 
-for iRx=header.nrx:-1:1
+for iRx=1:header.nrx
     path = strcat('/rxs/rx', num2str(iRx));
 
     rxPos      = h5readatt(fullfilename, path, 'Position');
@@ -72,21 +72,28 @@ fprintf('Done \n')
 % fs = 1/header.dt;
 % fAxis = (0:header.iterations-1)*fs/header.iterations;
 
-% NEW
-fprintf('\tPerforming FFT...')
-exp2n = log2(header.iterations); % get exponent for 2^n series
-exp2n = ceil(exp2n + 1); % get next higher exponent
-
 iterationsFFT = 2^exp2n;
 
-df    = 1/(header.dt*iterationsFFT);
-fAxis = linspace(0,iterationsFFT/2,fix(iterationsFFT/2+1))*df;    %making the frequency axis
+% fprintf('\tPerforming FFT...')
+% df    = 1/(header.dt*header.iterations);
+% fAxis = linspace(0,header.iterations/2,fix(header.iterations/2+1))*df;    %making the frequency axis
+% 
+% for component = allComponents
+%     for iRx = 1:header.nrx
+%         comp = component{1};
+%         FFT.(comp)(:,iRx) = fft(fields.(comp)(:,iRx), [], 1)*header.dt;
+%     end
+% end
+
+
+fprintf('\tPerforming FFT...')
+df    = 1/(header.dt*header.iterations);
+fAxis = linspace(0,header.iterations/2,fix(header.iterations/2+1))*df;    %making the frequency axis
 
 for component = allComponents
     for iRx = 1:header.nrx
         comp = component{1};
-        timeField = [fields.(comp)(:,iRx);zeros(iterationsFFT-header.iterations,1)];
-        FFT.(comp)(:,iRx) = fft(timeField, [], 1)*header.dt;
+        FFT.(comp)(:,iRx) = fft(fields.(comp)(:,iRx), [], 1)*header.dt;
     end
 end
 

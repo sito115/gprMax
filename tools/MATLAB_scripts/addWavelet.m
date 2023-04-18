@@ -1,6 +1,9 @@
 function allData = addWavelet(allData,timePlot, freqPlot, component, nonZeroThresh, lw)
 
 nField = numel(fieldnames(allData));
+
+
+
 colors = distinguishable_colors(nField+1);
 color  = colors(end,:); 
 

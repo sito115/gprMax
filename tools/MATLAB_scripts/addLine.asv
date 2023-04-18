@@ -22,13 +22,13 @@ timeLines = findobj(timePlot, 'Type', 'line');
 nColorsOld = numel(timeLines);
 
 nColorsNew = 0;
-for iField = nFields-nNewFields+1:nFields
-    fieldname =  fieldNames{iField};
-    traces = allData.(fieldname).Attributes.nrx;
+for iField = fieldNames'
+    traces = allData.(iField{1}).Attributes.nrx;
     nColorsNew = nColorsNew + traces;
 end
 
-colors = distinguishable_colors(nColorsOld + nColorsNew);
+
+colors = distinguishable_colors(nColors);
 
 colorCounter = 1;
 for iField = nFields-nNewFields+1:nFields

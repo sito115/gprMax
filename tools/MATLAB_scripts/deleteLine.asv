@@ -4,9 +4,8 @@ timeLines = findobj(timePlot, 'Type', 'line');
 freqLines = findobj(freqPlot, 'Type', 'line');
 
 showTF = zeros(numel(timeLines),1);
-lines  = strings(numel(timeLines),1);
 for iLine = 1:numel(timeLines)
-    lines(iLine) = timeLines(iLine).DisplayName;
+    
     if timeLines(iLine).UserData.ShowLine
         showTF(iLine) = 1;
     end
@@ -14,6 +13,11 @@ end
 
 switch mode
     case 'hide'
+
+    axesHandlesToChildObjects = findobj(gcf, 'Type', 'Legend');
+    lines = flipud(axesHandlesToChildObjects.String');
+    
+
     
     assert(any(showTF), 'No Lines to hide')    
     
@@ -24,7 +28,7 @@ switch mode
     indx = indx(sel_indx);
 
     if tf
-        for ix = indx'
+        for ix = indx
             timeLines(ix).Visible = 'off';
             timeLines(ix).Annotation.LegendInformation.IconDisplayStyle = 'off';
             timeLines(ix).UserData.ShowLine = 0;
@@ -38,7 +42,7 @@ switch mode
 
     case 'show'
 
-    assert(any(~showTF), 'No Lines to hide')
+    
 
 
     [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
@@ -48,13 +52,13 @@ switch mode
     indx = indx(sel_indx);
 
     if tf
-        for ix = indx'
+        for ix = indx
             timeLines(ix).Visible = 'on';
             timeLines(ix).Annotation.LegendInformation.IconDisplayStyle= 'on';
-            timeLines(ix).UserData.ShowLine = 1;
+            timeLines(ix).UserData.ShowLine = 0;
             freqLines(ix).Visible = 'on';
             freqLines(ix).Annotation.LegendInformation.IconDisplayStyle= 'on';
-            freqLines(ix).UserData.ShowLine = 1;
+            freqLines(ix).UserData.ShowLine = 0;
         end
     else
         fprintf('No lines selected')
