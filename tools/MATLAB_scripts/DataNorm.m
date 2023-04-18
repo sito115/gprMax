@@ -18,11 +18,12 @@ if strcmp(scale,'db')==1
     else
         DataN=mag2db(data./max(max(data)));
     end
-end
-if strcmp(scale,'lin')==1
+elseif strcmp(scale,'lin')==1
     if min(size(data))==1
         DataN=data/max(data);
     else
         DataN=data./max(max(data));
     end
+else
+    DataN = data;
 end

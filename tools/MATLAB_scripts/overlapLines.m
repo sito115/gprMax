@@ -8,6 +8,7 @@ legendString  = lgObj.String;
 fieldNames = fieldnames(allData);
 nFields = numel(fieldNames);
 colors = distinguishable_colors(nFields);
+colors = get(timePlot, 'ColorOrder');
 
 figure
 m = uimenu('Text','USER-Options');
@@ -22,7 +23,7 @@ for iField = 1:nFields
     tempAxis = TempField.Axis.time;
     firstBreak = TempField.FirstBreak;
     newAxis = tempAxis - firstBreak;
-    color = colors(iField,:);
+    color = TempField.Color;
 
     if normalizationTime 
         tempData = tempData/max(abs([min(tempData), max(tempData)]));
@@ -41,19 +42,19 @@ for iField = 1:nFields
 end
 
 if normalizationTime
-    prompt = sprintf('First break pick at normalized trace when > %.2e s', nonZeroThresh);
+    prompt = sprintf('First break pick at normalized trace when > %f %% above first minimum ', 100*nonZeroThresh);
 else
-    prompt = sprintf('First break pick at trace when > %.2e s', nonZeroThresh);
+    prompt = sprintf('First break pick at trace when > %f %% above first minimum', 100*nonZeroThresh);
 end
 
-xline(0,'--','DisplayName','Alligned First Breaks')
+xline(0,'--','DisplayName','Alligned First Breaks','LineWidth',1.5*lw)
 
 scatter(NaN,NaN,'filled','o','Color','red','DisplayName','Picked First Breaks',...
             'MarkerFaceAlpha',0.4)
 
 limits = get(gca,'XLim');
 xticks = get(gca,'xtick');
-xlim([(-xticks(2)+xticks(1)) limits(2)]);
+xlim([-1e-9 4e-8]);
 xlabel('Time (s)')
 grid on
 

@@ -20,12 +20,15 @@ nFields = numel(fieldNames);
 
 colors = distinguishable_colors(nFields);
 
-for iField = nFields-nNewFields:nFields
+for iField = nFields-nNewFields+1:nFields
     color = colors(iField, :);
     TempField  = allData.(fieldNames{iField});
-    firstBreak = plotTimeDomain(TempField, component, normalizationTime, lw, nonZeroThresh,timePlot, color);
+    allData.(fieldNames{iField}).Color = color;
+    [firstBreak,firstMinimumTime, maxAmplitude] = plotTimeDomain(TempField, component, normalizationTime, lw, nonZeroThresh,timePlot, color);
     plotFreq(TempField, color, component, lw, normalizationFreq, freqPlot)
     allData.(fieldNames{iField}).FirstBreak = firstBreak;
+    allData.(fieldNames{iField}).firstMinimumTime = firstMinimumTime;
+    allData.(fieldNames{iField}).maxAmplitude = maxAmplitude;
 end
 
 end

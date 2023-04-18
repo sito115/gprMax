@@ -28,8 +28,6 @@ resultsPath     =  fullfile(pathRoot, trdSemester, 'Results');
 Syn = load("C:\OneDrive - Delft University of Technology\4. Semester - Thesis\SyntheticMexicanHat.mat");
 syntheticMexicanHat = Syn.syntheticMexicanHat;
 
-
-
 filenameArray = {'PlaceAntennas_Dist9.0m_tSim6.00e-08_eps1.00_iA1_iBH0.out',...
 'PlaceAntennas_Dist8.0m_tSim6.00e-08_eps1.00_iA1_iBH0.out',...
 'PlaceAntennas_Dist7.0m_tSim6.00e-08_eps1.00_iA1_iBH0.out',...
@@ -444,34 +442,6 @@ legend('Location','eastoutside')
 title('Ratio for different thresholds')
 
 
-%% Plot Constants vs Distance in air
-figure
-m = uimenu('Text','USER-Options');
-uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
-grid on
-set(gca,'FontSize',fs)
-hold on
-
-colors = distinguishable_colors(numel(thresholds));
-for iConst = 1:2
-    for iThresh = 1:numel(thresholds)
-        currentThresh = thresholds(iThresh);
-        name = ['firstBreake' num2str(threshExpo(iThresh)) 'const' num2str(iConst)];
-    
-        currentLine = scatter(Data.Distances(boreTFTable{:,1}),...
-                Data.(name)(  boreTFTable{:,1}), ms, ...
-        	    colors(iConst,:),'filled',mkrs{iThresh} ,...
-        	    'MarkerFaceAlpha',alpha, 'Handlevisibility','On','DisplayName',sprintf('%s constant %d - %.2e',...
-        	    boreTFTable.Properties.VariableNames{iBorehole}, iConst, currentThresh)); %-iThresh/numel(thresholds))
-
-    end
-end
-
- title('Constants #1 #2 vs distance')
-legend('Location','eastoutside')
-xlabel('Distance [m]')
-
 %% Plot Ratio vs distances
 figure
 m = uimenu('Text','USER-Options');
@@ -548,18 +518,15 @@ grid on
 set(gca,'FontSize',fs)
 hold on
 
-distances = Data.Distances(~~isBoreHole);
-distancesTF = ismember(Data.Distances, distances); 
-
-colors = distinguishable_colors(numel(thresholds)*2*size(boreTFTable,2));
+colors = distinguishable_colors(numel(thresholds));
 for iBorehole = 1:size(boreTFTable,2)
     for iConst = 1:2
-        for iThresh = 1
+        for iThresh = 1:numel(thresholds)
             currentThresh = thresholds(iThresh);
             name = ['firstBreake' num2str(threshExpo(iThresh)) 'const' num2str(iConst)];
         
-            currentLine = scatter(Data.Distances(boreTFTable{:,iBorehole} & distancesTF),...
-                    Data.(name)(  boreTFTable{:,iBorehole} & distancesTF), ms, ...
+            currentLine = scatter(Data.Distances(boreTFTable{:,iBorehole}),...
+                    Data.(name)(  boreTFTable{:,iBorehole}), ms, ...
             	    colors(iBorehole,:),'filled',mkrs{iConst} ,...
             	    'MarkerFaceAlpha',alpha, 'Handlevisibility','On','DisplayName',sprintf('%s constant %d - %.2e',...
             	    boreTFTable.Properties.VariableNames{iBorehole}, iConst, currentThresh)); %-iThresh/numel(thresholds))
@@ -567,6 +534,6 @@ for iBorehole = 1:size(boreTFTable,2)
         end
     end
 end
- title('Constants #1 #2 vs distance')
+ title('Constants #1 #2 in airvs distance')
 legend('Location','eastoutside')
 xlabel('Distance [m]')

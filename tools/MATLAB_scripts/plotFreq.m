@@ -3,6 +3,7 @@ function plotFreq(TempField, color, component, lw, normalizationFreq, freqPlot)
     tempData    = TempField.Data.FFT.(component);
     tempAxis    = TempField.Axis.fAxis;
     displayName = TempField.FileName;
+    alpha = 0.8;
 
     tempData = abs(tempData(:,:));
     if normalizationFreq 
@@ -10,7 +11,7 @@ function plotFreq(TempField, color, component, lw, normalizationFreq, freqPlot)
     end
     
     plot(tempAxis, tempData(1:numel(tempAxis)),...
-        'DisplayName',displayName,'LineWidth', lw, 'Color',color, 'Parent', freqPlot);
+        'DisplayName',displayName,'LineWidth', lw, 'Color',[color,alpha], 'Parent', freqPlot);
 
     [~, indFd] = max(tempData);
     fcenter = tempAxis(indFd(1));

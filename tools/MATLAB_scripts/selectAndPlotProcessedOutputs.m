@@ -1,4 +1,4 @@
-clear, clc, %close all
+clear, clc, close all
 
 %% PARAMETER
 lw            = 1.5;    % line width
@@ -8,7 +8,7 @@ pathRoot      = 'C:\OneDrive - Delft University of Technology'; % specific pathR
 % Dialog
 prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency', 'Threshold first non-zero value',...
           'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]',sprintf('Use working directory [0] "%s" or specific pathRoot (for Thomas only) [1] "%s"',pwd, pathRoot)};
-answer = inputdlg(prompt','Define Parameters',[1 150],{'Ex', '4e8', '1e-7', '0', '0','1'});
+answer = inputdlg(prompt','Define Parameters',[1 150],{'Ex', '4e8', '1e-3', '0', '0','1'});
 
 component         = answer{1};
 fcut              = str2double(answer{2});
@@ -45,10 +45,10 @@ answer = questdlg(['Start of the program: Which files should be selected? Pre-Se
 switch answer
     case 'Manual'
         isManual = 1;
-    case 'Default'
+    case 'Default (only for Thomas)'
         isManual = 0;
         pathname        = fullfile(pathRoot, trdSemester, 'Results');   
-        allData = load_output(allData,filenameArray, pathname);
+        allData         = load_output(allData,filenameArray, pathname);
     case 'Cancel'
         return
 end
@@ -98,6 +98,10 @@ set(gca, 'FontSize', fs)
 xlabel('Time (s)')
 title([component ' - Time Domain'])
 
+lg = legend('Interpreter','none', 'FontSize', fs, 'Orientation','Vertical','NumColumns',2);
+lg.Layout.Tile = 'south';
+
+
 % FREQUENCY DOMAIN
 freqPlot = nexttile;
 grid on
@@ -112,15 +116,17 @@ colors = distinguishable_colors(nField);
 for iField = 1:nField
     TempField = allData.(fieldNames{iField});
     color = colors(iField,:);
-    firstBreak  = plotTimeDomain(TempField, component, normalizationTime, lw, nonZeroThresh,timePlot, color);
+    allData.(fieldNames{iField}).Color = color;
+     [firstBreak,firstMinimumTime, maxAmplitude]  = plotTimeDomain(TempField, component, normalizationTime, lw, nonZeroThresh,timePlot, color);
     plotFreq(TempField, color, component, lw, normalizationFreq, freqPlot)
     allData.(fieldNames{iField}).FirstBreak = firstBreak;
+    allData.(fieldNames{iField}).firstMinimumTime = firstMinimumTime;
+    allData.(fieldNames{iField}).maxAmplitude = maxAmplitude;
 end
 
-
-lg = legend('Interpreter','none', 'FontSize', fs, 'Orientation','Vertical','NumColumns',2);
-lg.Layout.Tile = 'south';
 title([component,' - Frequency Domain'])
+
+
 
 
 %% MENU
@@ -135,10 +141,10 @@ uimenu(m, 'Text', 'Add Title', 'MenuSelectedFcn', {@addTitle,t, fs})
 % uimenu(m, 'Text', 'Change Legend Order', 'MenuSelectedFcn', @changeLegendOrder)
 uimenu(m, 'Text', 'Add Line', 'MenuSelectedFcn', ['allData = addLine(timePlot, freqPlot, pathRoot,trdSemester,' ...
                                                  'component, normalizationTime, lw, nonZeroThresh, normalizationFreq, allData);'] );  
-uimenu(m, 'Text', 'Delete Lines', 'MenuSelectedFcn', {@deleteLine, timePlot, freqPlot} )
+uimenu(m, 'Text', 'Delete Lines', 'MenuSelectedFcn', 'allData = deleteLine(allData, timePlot, freqPlot);' )
 
 uimenu(m, 'Text', 'Overlap at first break', 'MenuSelectedFcn', 'overlapLines(allData , nonZeroThresh, normalizationTime, timePlot, component, lw, fs, fullfile(pathRoot, figureFolder))' )
-
+uimenu(m, 'Text', 'Add Wavelet (Mexican hat)', 'MenuSelectedFcn', 'allData = addWavelet(allData,timePlot, freqPlot, component, nonZeroThresh, lw);' )
 %% Pick times
 function PickTimes(src,event,t,nLines)
     button = 1;
@@ -151,7 +157,7 @@ function PickTimes(src,event,t,nLines)
         end
         fprintf('Point #%d at time at %e \n',counter, x)
         axnum = find(ismember(t.Children,gca));
-        plot(x,y,'Parent',t.Children(axnum), 'Color','r', 'Marker','o', 'HandleVisibility','on','MarkerSize',8)
+        plot(x,y,'Parent',t.Children(axnum), 'Color','r', 'Marker','o', 'HandleVisibility','off','MarkerSize',8)
         text(x,y,sprintf('#%d', counter),'VerticalAlignment','top','HorizontalAlignment','left','HandleVisibility','off',...
              'FontSize',15)
     end
@@ -218,28 +224,6 @@ uistack(h,'top')
 end
 
 
-%% delete Lines
-function deleteLine(src, event, timePlot, freqPlot) 
-
-axesHandlesToChildObjects = findobj(gcf, 'Type', 'Legend');
-lines = flipud(axesHandlesToChildObjects.String');
-
-
-[indx,tf] = listdlg('PromptString','Delete Lines',...
-    'SelectionMode','multiple','ListString',lines, 'ListSize', [500, 200]);
-
-timeLines = findobj(timePlot, 'Type', 'line');
-freqLines = findobj(freqPlot, 'Type', 'line');
-
-if tf
-    for i = indx
-        delete(timeLines(indx))
-        delete(freqLines(indx))
-    end
-else
-    fprintf('No lines selected')
-end
-
-end
+%% add wavelet
 
 

@@ -77,7 +77,7 @@ fprintf('Done \n')
 
 fprintf('\tSaving...')
 
-fieldName = erase(fileName,{'.','-','_',' ','(',')','[',']'});
+fieldName = erase(fileName,{'.','-','_',' ','(',')','[',']','+','-'});
 
 allData= struct;
 allData.(fieldName).Attributes   = header;
