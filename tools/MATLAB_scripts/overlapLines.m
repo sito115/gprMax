@@ -7,10 +7,12 @@ timeLines = findobj(timePlot, 'Type', 'line');
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',@SaveFigure);
 
 uimenu(m, 'Text', 'Select Time Window for FFT', 'MenuSelectedFcn', {@selectTimeWindow,gca, ...
                                                                     fcut, lw, fs, component})
+uimenu(m, 'Text', 'Hide Legend', 'MenuSelectedFcn', {@handle_legend,'hide', fs} )
+uimenu(m, 'Text', 'Show Legend', 'MenuSelectedFcn', {@handle_legend,'show', fs} )
 
 
 set(gca, 'FontSize', fs)

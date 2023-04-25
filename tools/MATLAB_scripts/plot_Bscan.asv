@@ -86,7 +86,7 @@ figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';                     
     if nsrc == 1
         scrcPos = data.(fn).Attributes.SrcData.Position;
         scrcPosType = data.(fn).Attributes.SrcData.Type;
-        dRx = data.(fn).Attributes.RxData.Position(2) - data.(fn).Attributes.RxData.Position(1);
+        dRx = data.(fn).Attributes.Rx.rx2.Position - data.(fn).Attributes.Rx.rx1.Position;
         subtit1 = sprintf('(x_{TX},y_{TX},z_{TX}) = (%gm, %gm, %gm) - %s', scrcPos(1),scrcPos(2),scrcPos(3),scrcPosType );
         subtit2 = sprintf('(\\Delta x_{RX},\\Delta y_{RX},\\Delta z_{RX}) = (%gm, %gm, %gm)',dRx(1),dRx(2),dRx(3));
         subtitle({subtit1,subtit2})

@@ -50,12 +50,16 @@ allData.(fieldName).Axis.time               = tVector;
 df    = 1/(dt*nSamples);
 fAxis = linspace(0,nSamples/2,fix(nSamples/2+1))*df;    %making the frequency axis
 
-plot(tVector,wHatHat , ':', 'DisplayName',identifier,...
+tLine = plot(tVector,wHatHat , ':', 'DisplayName',identifier,...
                'LineWidth', lw, 'Parent',timePlot,'Color',color);
+tLine.UserData.ShowLine = 1;
+tLine.UserData.Color = color;
 
-plot(fAxis, abs(wHatHat_fft(1:numel(fAxis)))  ,...
+fLine = plot(fAxis, abs(wHatHat_fft(1:numel(fAxis)))  ,...
                                 ':', 'DisplayName',identifier,...
                                 'LineWidth', lw, 'Parent',freqPlot,'Color',color);
+fLine.UserData.ShowLine = 1;
+fLine.UserData.Color = color;
 %% Add Firstbreak
 [pks,locs] = findpeaks(-wHatHat, 'MinPeakProminence',0.1*max(abs(wHatHat)));
 

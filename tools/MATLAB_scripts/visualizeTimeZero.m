@@ -173,7 +173,7 @@ x = x(all(isFinite,2));
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 set(gca,'FontSize',fs)
 grid on
 hold on
@@ -244,7 +244,7 @@ boreTFTable = table((~isBoreHole),isAirUnsat, isAirSat,isWaterUnsat,isWatSat, 'V
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 hold on
@@ -282,7 +282,7 @@ Data.DeltaMinError = (Data.firstMinimum - firstMinimumSynth -  Data.TrueTT) ./ D
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 hold on
@@ -315,7 +315,7 @@ legend('Location','eastoutside')
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 set(gca(),'xscale','log')
@@ -363,7 +363,7 @@ legend('Location','eastoutside','FontSize',fs)
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 set(gca(),'xscale','log')
@@ -406,7 +406,7 @@ title('Constans #1 #2 #3 vs thresholds for first break pick for a %.1f m distanc
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 set(gca(),'xscale','log')
@@ -448,7 +448,7 @@ title('Ratio for different thresholds')
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 hold on
@@ -476,7 +476,7 @@ xlabel('Distance [m]')
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 set(gca(),'xscale','log')
@@ -515,7 +515,7 @@ title('Ratio for different thresholds vs distance')
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 hold on
@@ -543,7 +543,7 @@ legend('Location','eastoutside')
 figure
 m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 grid on
 set(gca,'FontSize',fs)
 hold on

@@ -60,33 +60,41 @@ freqTile.Title.String = [component,' - Frequency Domain'];
 timeLines = findobj(timePlot, 'Type', 'line');
 for iLine = 1:numel(timeLines)
     if timeLines(iLine).UserData.ShowLine
+        % select x and y data
         tempData = timeLines(iLine).YData;
-
         tempAxis = timeLines(iLine).XData;
+
+        % find start and end index
         iT0      = find(tempAxis >= start_value, 1,"first");
         iTEnd    = find(tempAxis >= end_value, 1,"first");
 
         tempData = tempData(iT0:iTEnd);
         tempAxis = tempAxis(iT0:iTEnd);
 
+        % windowing
+        tempData = tempData.*hanning(numel(tempData))';
+
+        % fft
         dt         = timeLines(iLine).UserData.Attributes.dt;
-        iterations = numel(tempAxis);
+        samples    = numel(tempAxis);
 
         fprintf('\tPerforming FFT...')
-        exp2n = log2(iterations); % get exponent for 2^n series
+        % determine how many windows for zero padding
+        exp2n = log2(samples); % get exponent for 2^n series
         exp2n = ceil(exp2n + 2);  % get next higher exponent
         
         iterationsFFT = 2^exp2n;
         
+        % f axis
         df    = 1/(dt*iterationsFFT);
         fAxis = linspace(0,iterationsFFT/2,fix(iterationsFFT/2+1))*df;    %making the frequency axis
         
-        tempDataFFT  = [tempData';zeros(iterationsFFT-iterations,1)];
+        tempDataFFT  = [tempData';zeros(iterationsFFT-samples,1)];
         fftData   = fft(tempDataFFT, [], 1)*dt;
         fftData   = abs(fftData(:,:));
 
         fprintf('Done \n')
-        color = timeLines(iLine).UserData.Color;
+        color        = timeLines(iLine).UserData.Color;
         legendString = timeLines(iLine).DisplayName;
 
         plot(tempAxis,tempData , 'DisplayName',legendString,...
@@ -100,10 +108,13 @@ end
 fWindow.Visible = 'on';
 
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
+         'MenuSelectedFcn',@SaveFigure);
 
 uimenu(m, 'Text', 'Hide Lines', 'MenuSelectedFcn', {@deleteLine,timeTile, freqTile,'hide'} )
 uimenu(m, 'Text', 'Show Lines', 'MenuSelectedFcn', {@deleteLine,timeTile, freqTile,'show'} )
+uimenu(m, 'Text', 'Hide Legend', 'MenuSelectedFcn', {@handle_legend,'hide', fs} )
+uimenu(m, 'Text', 'Show Legend', 'MenuSelectedFcn', {@handle_legend,'show', fs} )
+
 
 t.Title.String = sprintf('Time Window from %g ns to %g ns', start_value*1e9, end_value*1e9);
 

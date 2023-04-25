@@ -10,7 +10,7 @@ def antenna_like_RLFLA(x:float, y:float, z:float, polarisation:str,
     based on Sensors and Software crosshole 200 MHz based on PulseEKKO design 
     and Mozzafarri et al 2022.
     https://github.com/amozaffari/CrossholeGPR/blob/master/FWI_build_a_3D_cube_widen_5.m
-    x          	    : coordinate of dipole position (+0.26m from left end of antenna)
+    x          	    : coordinate of dipole position
     y               : coordinate of dipole position 
     z               : coordinate of dipole position 
     polarisation    : polarisation of voltage source ('x', 'y' or 'z')

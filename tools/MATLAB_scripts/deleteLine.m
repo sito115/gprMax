@@ -7,7 +7,7 @@ showTF = zeros(numel(timeLines),1);
 lines  = strings(numel(timeLines),1);
 for iLine = 1:numel(timeLines)
     lines(iLine) = timeLines(iLine).DisplayName;
-    if timeLines(iLine).UserData.ShowLine
+    if isempty(timeLines(iLine).UserData) || timeLines(iLine).UserData.ShowLine
         showTF(iLine) = 1;
     end
 end
@@ -60,6 +60,16 @@ switch mode
         fprintf('No lines selected')
     end
 
+    case 'delete'
+            [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
+        'SelectionMode','multiple','ListString',lines, 'ListSize', [500, 200]);
+
+        if tf
+            for i = sel_indx
+                delete(timeLines(i))
+                delete(freqLines(i))
+            end
+        end
 end
 
 

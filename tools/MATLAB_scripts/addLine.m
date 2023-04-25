@@ -30,7 +30,7 @@ end
 
 colors = distinguishable_colors(nColorsOld + nColorsNew);
 
-colorCounter = 1;
+colorCounter = nColorsOld + 1;
 for iField = nFields-nNewFields+1:nFields
     TempField  = allData.(fieldNames{iField});
     nRx       = TempField.Attributes.nrx;

@@ -1,5 +1,5 @@
 %% Select Path
-function [allData,fieldName] = fft_gprMaxOutput(path, fileName)
+function [allData,fieldName] = fft_gprMaxOutput(path, fileName, isFFT)
 
 fullfilename  = fullfile(path, fileName);
 allComponents = {'Ex', 'Ey', 'Ez'};         % to perform fft
@@ -26,13 +26,15 @@ header.gprMaxVers = h5readatt(fullfilename, '/', 'gprMax');
 
 header.fullfileName = fullfilename;
 
+srcPositions = zeros(header.nsrc, 3);
+srcTypes      = strings(header.nsrc,1);   
 for iSrc = 1:header.nsrc
     srcPos      = h5readatt(fullfilename, ['/srcs/src',num2str(iSrc)], 'Position');
     srcType     = h5readatt(fullfilename, ['/srcs/src',num2str(iSrc)], 'Type');
-    header.Src.(['src',num2str(iSrc)]).Position = srcPos;
-    header.Src.(['src',num2str(iSrc)]).Type = srcType;
+    srcPositions(iSrc,:) = srcPos;
+    srcTypes(iSrc)       = srcType;
 end
-
+header.SrcData = table(srcTypes, srcPositions,'VariableNames',{ 'Type', 'Position'});
 fprintf('Done \n')
 
 %% Load E-Field Time Domain
@@ -48,13 +50,15 @@ fields.Hx = zeros(header.iterations, header.nrx);
 fields.Hy = zeros(header.iterations, header.nrx);
 fields.Hz = zeros(header.iterations, header.nrx);
 
+rxPositions = zeros(header.nrx, 3);
+rxNames     = strings(header.nrx,1);    
 for iRx=1:header.nrx
     path = strcat('/rxs/rx', num2str(iRx));
 
     rxPos      = h5readatt(fullfilename, path, 'Position');
     rxName     = h5readatt(fullfilename, path, 'Name');
-    header.Rx.(['rx',num2str(iRx)]).Position = rxPos;
-    header.Rx.(['rx',num2str(iRx)]).Name     = rxName;
+    rxPositions(iRx,:) = rxPos;
+    rxNames(iRx)        = rxName;
 
     path = strcat(path, '/');
     fields.Ex(:,iRx) = h5read(fullfilename, strcat(path, 'Ex'));
@@ -65,78 +69,52 @@ for iRx=1:header.nrx
     fields.Hz(:,iRx) = h5read(fullfilename, strcat(path, 'Hz'));
 end
 
+header.RxData = table(rxNames, rxPositions,'VariableNames',{ 'Name', 'Position'});
+
 fprintf('Done \n')
 %% FFT of Components
-% https://de.mathworks.com/help/wavelet/gs/from-fourier-analysis-to-wavelet-analysis.html
-% https://de.mathworks.com/help/matlab/math/fourier-transforms.html
-% fs = 1/header.dt;
-% fAxis = (0:header.iterations-1)*fs/header.iterations;
-
-iterationsFFT = 2^exp2n;
-
-% fprintf('\tPerforming FFT...')
-% df    = 1/(header.dt*header.iterations);
-% fAxis = linspace(0,header.iterations/2,fix(header.iterations/2+1))*df;    %making the frequency axis
-% 
-% for component = allComponents
-%     for iRx = 1:header.nrx
-%         comp = component{1};
-%         FFT.(comp)(:,iRx) = fft(fields.(comp)(:,iRx), [], 1)*header.dt;
-%     end
-% end
-
-
-fprintf('\tPerforming FFT...')
-df    = 1/(header.dt*header.iterations);
-fAxis = linspace(0,header.iterations/2,fix(header.iterations/2+1))*df;    %making the frequency axis
-
-for component = allComponents
-    for iRx = 1:header.nrx
-        comp = component{1};
-        FFT.(comp)(:,iRx) = fft(fields.(comp)(:,iRx), [], 1)*header.dt;
+if isFFT
+    % https://de.mathworks.com/help/wavelet/gs/from-fourier-analysis-to-wavelet-analysis.html
+    % https://de.mathworks.com/help/matlab/math/fourier-transforms.html
+    % fs = 1/header.dt;
+    % fAxis = (0:header.iterations-1)*fs/header.iterations;
+    
+    % NEW
+    fprintf('\tPerforming FFT...')
+    exp2n = log2(header.iterations); % get exponent for 2^n series
+    exp2n = ceil(exp2n + 1); % get next higher exponent
+    
+    iterationsFFT = 2^exp2n;
+    
+    df    = 1/(header.dt*iterationsFFT);
+    fAxis = linspace(0,iterationsFFT/2,fix(iterationsFFT/2+1))*df;    %making the frequency axis
+    
+    for component = allComponents
+        for iRx = 1:header.nrx
+            comp = component{1};
+            timeField = [fields.(comp)(:,iRx);zeros(iterationsFFT-header.iterations,1)];
+            FFT.(comp)(:,iRx) = fft(timeField, [], 1)*header.dt;
+        end
     end
+    
+    
+    fprintf('Done \n')
 end
-
-
-fprintf('Done \n')
 %% Create output structure
 
 fprintf('\tSaving...')
 
+% erase ilegal characters
 fieldName = erase(fileName,{'.','-','_',' ','(',')','[',']','+','-'});
 
 allData= struct;
 allData.(fieldName).Attributes   = header;
 allData.(fieldName).Data.fields  = fields;
-allData.(fieldName).Data.FFT     = FFT;
+if isFFT
+    allData.(fieldName).Data.FFT     = FFT;
+    allData.(fieldName).Axis.fAxis   = fAxis;
+end
 allData.(fieldName).Axis.time    = time;
-allData.(fieldName).Axis.fAxis   = fAxis;
 allData.(fieldName).FileName     = fileName;
 
 fprintf('Done \n')
-    %% Save
-
-%     data = load(fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'));
-%     Results = data.Results;
-% 
-%     if ~ismember(newName, fieldnames(Results))
-%        
-%         Results.(newName) = allData.(newName);
-% 
-%         save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
-%         fprintf('Succesfully save file.\n')
-%     else
-%         fprintf('The field %s already exists in Results\n', newName)
-%         answer = input('Really save?\n','s');
-%         if strcmp(answer, 'y')
-%             Results.(newName) = allData.(newName);
-%     
-%             save (fullfile(pathRoot, '3. Semester - Studienunterlagen\ResearchModule\AllResults.mat'),'Results', '-v7.3')
-%             fprintf('Succesfully save file.\n')
-%         end
-%     end
-% 
-% end
-
-
-

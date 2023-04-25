@@ -8,7 +8,7 @@ pathRoot      = 'C:\OneDrive - Delft University of Technology'; % specific pathR
 % Dialog
 prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency', 'Threshold first non-zero value',...
           'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]',sprintf('Use working directory [0] "%s" or specific pathRoot (for Thomas only) [1] "%s"',pwd, pathRoot)};
-answer = inputdlg(prompt','Define Parameters',[1 150],{'Ey', '4e8', '1e-3', '0', '0','1'});
+answer = inputdlg(prompt','Define Parameters',[1 150],{'Ey', '6e8', '1e-3', '0', '0','1'});
 
 component         = answer{1};
 fcut              = str2double(answer{2});
@@ -141,25 +141,35 @@ title([component,' - Frequency Domain'])
 
 %% MENU
 m = uimenu('Text','USER-Options');
-
-
-uimenu(m,'Text','Pick Times', 'MenuSelectedFcn',{@PickTimes,t,nField});
 uimenu(m,'Text','Save Figure',...
-         'MenuSelectedFcn','SaveFigure(fullfile(pathRoot, figureFolder))');
-uimenu(m, 'Text', 'Change Legend Names', 'MenuSelectedFcn', @changeLegendNames)
-uimenu(m, 'Text', 'Add Title', 'MenuSelectedFcn', {@addTitle,t, fs})
-uimenu(m, 'Text', 'Add Line', 'MenuSelectedFcn', ['allData = addLine(timePlot, freqPlot, pathRoot,trdSemester,' ...
-                                                 'component, normalizationTime, lw, nonZeroThresh, normalizationFreq, allData);'] );  
-uimenu(m, 'Text', 'Hide Lines', 'MenuSelectedFcn', {@deleteLine,timePlot, freqPlot,'hide'} )
-uimenu(m, 'Text', 'Show Lines', 'MenuSelectedFcn', {@deleteLine,timePlot, freqPlot,'show'} )
+         'MenuSelectedFcn',{@SaveFigure,fullfile(pathRoot, figureFolder)});
 
-uimenu(m, 'Text', 'Overlap at first break', 'MenuSelectedFcn', {@overlapLines, nonZeroThresh, timePlot, component, lw, fs, fcut} )
-uimenu(m, 'Text', 'Add Wavelet (Mexican hat)', 'MenuSelectedFcn', 'allData = addWavelet(allData,timePlot, freqPlot, component, nonZeroThresh, lw);' )
-uimenu(m, 'Text', 'Select Time Window for FFT', 'MenuSelectedFcn', {@selectTimeWindow,timePlot, fcut, lw, fs, component})
+uimenu(m, 'Text', 'Add Line', 'MenuSelectedFcn', ['allData = addLine(timePlot, freqPlot, pathRoot,trdSemester,' ...
+                                                 'component, normalizationTime, lw, nonZeroThresh, normalizationFreq, allData);'] ); 
+
+% labels
+changeLabels = uimenu(m, 'Label', 'Change Labels');
+uimenu(changeLabels, 'Text', 'Change Legend Names', 'MenuSelectedFcn', @changeLegendNames)
+uimenu(changeLabels, 'Text', 'Add Title', 'MenuSelectedFcn', {@addTitle,t, fs})
+
+% hide show
+hideShow     = uimenu(m, 'Label', 'Hide/Show');
+uimenu(hideShow, 'Text', 'Hide Lines', 'MenuSelectedFcn', {@deleteLine,timePlot, freqPlot,'hide'} )
+uimenu(hideShow, 'Text', 'Show Lines', 'MenuSelectedFcn', {@deleteLine,timePlot, freqPlot,'show'} )
+uimenu(hideShow, 'Text', 'Delete Lines', 'MenuSelectedFcn', {@deleteLine,timePlot, freqPlot,'delete'} )
+uimenu(hideShow, 'Text', 'Hide Legend', 'MenuSelectedFcn', {@handle_legend,'hide', fs} )
+uimenu(hideShow, 'Text', 'Show Legend', 'MenuSelectedFcn', {@handle_legend,'show', fs} )
+
+% process
+process     = uimenu(m, 'Label', 'Process');
+uimenu(process,'Text','Pick Times', 'MenuSelectedFcn',{@PickTimes,t}); 
+uimenu(process, 'Text', 'Overlap at first break', 'MenuSelectedFcn', {@overlapLines, nonZeroThresh, timePlot, component, lw, fs, fcut} )
+uimenu(process, 'Text', 'Add Wavelet (Mexican hat)', 'MenuSelectedFcn', 'allData = addWavelet(allData,timePlot, freqPlot, component, nonZeroThresh, lw);' )
+uimenu(process, 'Text', 'Select Time Window for FFT', 'MenuSelectedFcn', {@selectTimeWindow,timePlot, fcut, lw, fs, component})
 %% Pick times
-function PickTimes(src,event,t,nLines)
+function PickTimes(src,event,t)
     button = 1;
-    counter = numel(get(gca,'Children'))-nLines;
+    counter = numel(get(gca,'Children'));
     while button == 1
         counter = counter + 1;
         [x,y, button] = ginput(1);
@@ -168,7 +178,7 @@ function PickTimes(src,event,t,nLines)
         end
         fprintf('Point #%d at time at %e \n',counter, x)
         axnum = find(ismember(t.Children,gca));
-        plot(x,y,'Parent',t.Children(axnum), 'Color','r', 'Marker','o', 'HandleVisibility','off','MarkerSize',8)
+        plot(x,y,'Parent',t.Children(axnum), 'Color','r', 'Marker','o', 'HandleVisibility','off','MarkerSize',8, 'DisplayName','')
         text(x,y,sprintf('#%d', counter),'VerticalAlignment','top','HorizontalAlignment','left','HandleVisibility','off',...
              'FontSize',15)
     end
