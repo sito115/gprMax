@@ -1,5 +1,5 @@
 function [firstBreak,firstMinimumTime, maxAmplitude] = plotTimeDomain(TempField, component, normalizationTime, lw,...
-                                              nonZeroThresh,timePlot, color)
+                                              timePlot, color)
 
     alpha = 0.7;
     nRx   = TempField.Attributes.nrx;
@@ -20,8 +20,8 @@ function [firstBreak,firstMinimumTime, maxAmplitude] = plotTimeDomain(TempField,
         
         normalizedTempData = tempData/max(abs([min(tempData), max(tempData)]));
     
-        [firstBreak(iRx),firstMinimumTime(iRx), maxAmplitude(iRx)] = ...
-            find1stBreak(tempData, tempAxis, nonZeroThresh);
+%         [firstBreak(iRx),firstMinimumTime(iRx), maxAmplitude(iRx)] = ...
+%             find1stBreak(tempData, tempAxis, nonZeroThresh);
     
         if normalizationTime
             tempData = normalizedTempData;
@@ -38,9 +38,9 @@ function [firstBreak,firstMinimumTime, maxAmplitude] = plotTimeDomain(TempField,
         lineObj.UserData.iRx        = iRx;
         lineObj.UserData.ShowLine   = 1;
         lineObj.UserData.Color      = color(iRx,:);
-        lineObj.UserData.FirstBreak = firstBreak(iRx);
-        lineObj.UserData.firstMinimumTime = firstMinimumTime(iRx);
-        lineObj.UserData.maxAmplitude = maxAmplitude(iRx);
+%         lineObj.UserData.FirstBreak = firstBreak(iRx);
+%         lineObj.UserData.firstMinimumTime = firstMinimumTime(iRx);
+%         lineObj.UserData.maxAmplitude = maxAmplitude(iRx);
 
     end
    

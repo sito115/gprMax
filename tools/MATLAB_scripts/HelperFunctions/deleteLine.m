@@ -1,4 +1,8 @@
-function deleteLine(src, event, timePlot, freqPlot, mode) 
+function deleteLine(src, event, timePlot, freqPlot, mode1, mode2) 
+
+if nargin < 6 || isempty(mode2)
+    mode2 = 'select';
+end
 
 timeLines = findobj(timePlot, 'Type', 'line');
 freqLines = findobj(freqPlot, 'Type', 'line');
@@ -12,16 +16,24 @@ for iLine = 1:numel(timeLines)
     end
 end
 
-switch mode
+switch mode1
     case 'hide'
-    
-    assert(any(showTF), 'No Lines to hide')    
-    
-    [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
-        'SelectionMode','multiple','ListString',lines(showTF==1), 'ListSize', [500, 200]);
+    assert(any(showTF), 'No Lines to hide') 
+    switch mode2
+        case 'select'
+   
+            [sel_indx,tf] = select(lines(showTF==1));
+        
+            indx = find(showTF);
+            indx = indx(sel_indx);
+        case 'filter'
+            answer = filter();
+            idx    = contains(lines,answer,'IgnoreCase',true);
+            indx   = find(idx);
+            tf     = true;
 
-    indx = find(showTF);
-    indx = indx(sel_indx);
+
+    end
 
     if tf
         for ix = indx'
@@ -40,12 +52,18 @@ switch mode
 
     assert(any(~showTF), 'No Lines to hide')
 
-
-    [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
-        'SelectionMode','multiple','ListString',lines(showTF==0), 'ListSize', [500, 200]);
-
-    indx = find(~showTF);
-    indx = indx(sel_indx);
+    switch mode2
+        case 'select'
+            [sel_indx,tf] = select(lines(showTF==0));
+        
+            indx = find(~showTF);
+            indx = indx(sel_indx);
+        case 'filter'
+            answer = filter();
+            idx    = contains(lines,answer,'IgnoreCase',true);
+            indx   = find(idx);
+            tf     = true;
+    end
 
     if tf
         for ix = indx'
@@ -61,8 +79,7 @@ switch mode
     end
 
     case 'delete'
-            [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
-        'SelectionMode','multiple','ListString',lines, 'ListSize', [500, 200]);
+        [sel_indx,tf] = select(lines);
 
         if tf
             for i = sel_indx
@@ -73,4 +90,19 @@ switch mode
 end
 
 
+end
+
+%%
+function [sel_indx,tf] = select(list)
+            [sel_indx,tf] = listdlg('PromptString','Delete Lines',...
+        'Selectionmode','multiple','ListString',list, 'ListSize', [500, 200]);
+
+end
+%%
+function answer = filter()
+    prompt = {'Filter all lines that do contain:'};
+    dlgtitle = 'Input';
+    dims = [1 35];
+    definput = {'Trace'};
+    answer = inputdlg(prompt,dlgtitle,dims,definput);
 end

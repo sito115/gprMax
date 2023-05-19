@@ -1,5 +1,5 @@
 function allData = addLine(timePlot, freqPlot, pathRoot,trdSemester,...
-                           component, normalizationTime, lw, nonZeroThresh, normalizationFreq, allData)
+                           component, normalizationTime, lw, normalizationFreq, allData)
 
 [filenameArray, pathname, check] = uigetfile([fullfile(pathRoot,trdSemester,'Results') '\*.out'],...
                             'Select gprMax output file to plot B-scan', 'MultiSelect', 'on');
@@ -36,11 +36,8 @@ for iField = nFields-nNewFields+1:nFields
     nRx       = TempField.Attributes.nrx;
     color     = colors(colorCounter:colorCounter+nRx-1,:);
     allData.(fieldNames{iField}).Color = color;
-    [firstBreak,firstMinimumTime, maxAmplitude] = plotTimeDomain(TempField, component, normalizationTime, lw, nonZeroThresh,timePlot, color);
+    plotTimeDomain(TempField, component, normalizationTime, lw, timePlot, color);
     plotFreq(TempField, color, component, lw, normalizationFreq, freqPlot)
-    allData.(fieldNames{iField}).FirstBreak = firstBreak;
-    allData.(fieldNames{iField}).firstMinimumTime = firstMinimumTime;
-    allData.(fieldNames{iField}).maxAmplitude = maxAmplitude;
     colorCounter = colorCounter + nRx;
 end
 
