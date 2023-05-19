@@ -52,9 +52,11 @@ def get_material2DArray(file, plane, idx):
 
 
 if __name__ == '__main__':
-    file_path = filedialog.askopenfilename()
-    plane = 'z' #'y'
+    file_path = filedialog.askopenfilename( title='Select a file',
+                                           filetypes=(('Geometry Files', '*.vti'),))
+    plane = 'y' #'y'
     idx = 0
     result2D = get_material2DArray(file_path, plane, idx)
-    plt.imshow(result2D, origin='upper')
+    plt.imshow(result2D, origin='lower')
+    plt.title('%s' %(file_path.split('/')[-1]))
     plt.show()

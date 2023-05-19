@@ -7,7 +7,7 @@ import numpy as np
 from natsort import natsorted
 from displayGeometry import get_material2DArray
 
-def createAnimation(fileGeom,folderSnaps,displayFile,
+def createAnimation(fileGeom,folderSnaps,
                     field, plane,idx, inter, alphaValue,
                     absoluteScaling, title,dt, ax, fig):
     '''
@@ -31,7 +31,7 @@ def createAnimation(fileGeom,folderSnaps,displayFile,
 
     files       = os.listdir(folderSnaps)
     # filesSorted = natsorted(files)
-    filesSorted = sorted(files, key=lambda x:int(x.split('_')[2].split('.')[0]))
+    filesSorted = sorted(files, key=lambda x:int(x.split('_')[1].split('.')[0].split('snap')[1]))
 
     planeComMappingTable = {'x':2, 'y':1, 'z':0}
     component            = planeComMappingTable[plane]
@@ -87,11 +87,11 @@ if __name__ == '__main__':
     folderGeo       = r"C:\\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\\Thesis\\gprMaxFolder\\gprMax\\ProcessedFiles"
     snapFile        = askdirectory()
     snapFolderName  = os.path.basename(snapFile)
-    geomFile        = os.path.join(folderGeo,snapFolderName.replace('_snaps','.vti'))
+    #geomFile        = os.path.join(folderGeo,'',snapFolderName.replace('_snaps','.vti'))
     field           = 'E-field'
     inter           = 400
     alphaValue      = 0.5
-    absoluteScaling = 1
+    absoluteScaling = 1e-5
     plane           = 'y'
     idx             = 0
     isSave          = True
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots()
 
-    anim = createAnimation(None,snapFile,'',
+    anim = createAnimation(None,snapFile,
                     field, plane,idx, inter, alphaValue,
                     absoluteScaling, snapFolderName,dt, ax, fig)
     
