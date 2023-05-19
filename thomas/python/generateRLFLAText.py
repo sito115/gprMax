@@ -126,8 +126,8 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
                                                                radiusRes))
 
     if isTx:    # Source
-        fid.write('#waveform: gaussian %f %f %s\n' % (1, centerFreq, 'Gaus' + ID))
-        fid.write('#voltage_source: %s %f %f %f %f %s\n' %(polarisation,x,y,z,resSrc,'Gaus' + ID))
+        fid.write('#waveform: ricker %f %f %s\n' % (1, centerFreq, 'ricker' + ID))
+        fid.write('#voltage_source: %s %f %f %f %f %s\n' %(polarisation,x,y,z,resSrc,'ricker' + ID))
 
     else:       # Receiver
         fid.write('#rx: %f %f %f\n' %(x,y,z))
