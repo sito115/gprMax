@@ -20,23 +20,37 @@ if not os.path.exists(saveFolder):
 
 
 # Parameters
-warrPos     = 10        # src position for Warr, choose between [10, 30, 40, 50, 80, 90, 100, 110]
+extraInf    = '10PML'     # will be added to as suffix to the generated input file
+
+size        = 0.03
+
+warrPos     = 110        # src position for Warr, choose between [10, 30, 40, 50, 80, 90, 100, 110]
+
+
 ds0Rx       = 0.9         #initial offset to source [m] (table 1 n_x)
-maxRxOffset = 1.7         # max receiver offset to source [m] (table 1 n_x)
-isRB        = False      # use initial parameters obtained from ray-based inversion (table 1)
+maxRxOffset = 1.9        # max receiver offset to source [m] (table 1 n_x)
+
 
 dsRx        = 0.1       # receiver spacing [m] (table 1)
-tSim        = 90e-9     # figure 2
+if dsRx % size != 0:
+    dsRx += size - (dsRx % size)
+    dsRx = np.round(dsRx, decimals= 4)
 
+
+tSim        = 70e-9     # figure 2
+
+isRB        = False      # use initial parameters obtained from ray-based or FWI inversion (table 1)
 ### Geometries #####
-cellSize = (0.01, 0.01, 0.01) # x,y,z
+
+cellSize = (size,size,size) # x,y,z
+nBufferCells = 15
 # the direct ground wave which propagates to a depth of up to ∼30 cm - stated in Introduction of II. METHODOLOGY 
-buffer           = 0.2     # buffer between source and last receiver to start of PML region [m]
-hSoil            = 0.4     # thickness of halfspace [m]
-hAir             = 0.2     # thickness of free_space [m]
-yDimNet          = 0.3     # net size of y-Dimension (without PMLs)
-nPml             = 40     # number of PML cells from each side of domain 
-nCellsAboveInt   = 3       # how many cells between source/receiver and soil-air interface
+buffer           = nBufferCells*size         # buffer between source and last receiver to start of PML region [m]
+hSoil            = 0.4         # thickness of halfspace [m]
+hAir             = 0.2         # thickness of free_space [m]
+yDimNet          = 2*nBufferCells*size     # net size of y-Dimension (without PMLs)
+nPml             = 10          # number of PML cells from each side of domain 
+nCellsAboveInt   = 3           # how many cells between source/receiver and soil-air interface
 
 
 warrPosAll = np.array([10, 30, 40, 50, 80, 90, 100, 110]) # position of WARR measurement included for inversion (table 1)
@@ -55,8 +69,7 @@ else:
 
 sigma = sigma * 1e-3
 
-
-# Center Frequencies from Figure 9
+# Center Frequencies from Figure 9 in MHz
 centerFreqs = np.array([115.0000,  111.8000,  110.2000,  108.6000,  103.8000,  102.2000,  100.6000,   99.0000])
 freqDipole  = centerFreqs[idx]*1e6   # Frequency of point source
 
@@ -68,7 +81,7 @@ xDimAll = xDimNet + 2*nPml*cellSize[0]
 yDimAll = yDimNet + 2*nPml*cellSize[1]
 zDimAll = zDimNet + 2*nPml*cellSize[2]
 
-name = 'Busch2014Warr%dm_isRB%d_maxOff%.2fm' %(warrPos, isRB, maxRxOffset)
+name = 'Busch2014Warr%dm_isRB%d_maxOff%.2fm%s' %(warrPos, isRB, maxRxOffset,extraInf)
 fileName = os.path.join(saveFolder, name + '.in')
 fid = open(fileName, 'w')
 

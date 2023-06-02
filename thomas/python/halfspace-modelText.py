@@ -14,42 +14,58 @@ if not os.path.exists(saveFolder):
 # Model Settings
 nameIdentifier = ''  # to be included in title and geometry file (optional)
 
-isRLFLA_TX        = False   # use RLFLA or point antennae
+isRLFLA_TX        = True    # use RLFLA or point antennae
 isRLFLA_RX        = False   # use RLFLA or point antennae
-is3D              = False   # use 3D Model or 2D [1 cell in y direction]
+is3D              = True    # use 3D Model or 2D [1 cell in y direction]
 isGradient        = False   # include gradient in model
 isVDK5Gradient    = False   # gradient from page 186 thesis jan van der kruk (2001)
 isVDK10Gradient   = False   # gradient from page 186 thesis jan van der kruk (2001)
 isSlice           = True    # use 2D slide for movies and geometry through feeding point of Antenna
 isBottomReflector = False   # include a bottem reflecotr in model
-
+conductivity      = 0.00   # S/m
 # Geometry Settings
-nSnaps      = 100        # negative if no animation is created
-isGeometry  = True     # create geometry file, true false
+nSnaps      = -1        # negative if no animation is created
+isGeometry  = False     # create geometry file, true false
 
 # Materials
-er_0                  = 5     # permittivity at start defined by 'gradientStart'
-er_halfspace          = 12.5    # permittivity of lower halfspace
-h                     = 0.1   # thickness of gradient
+er_0                  = 6    # permittivity at start defined by 'gradientStart'
+
+er_halfspace          = 5    # permittivity of lower halfspace
+
+h                     = 0.3   # thickness of gradient
 er_bottom_reflector   = 20    # permittivity of bottom reflector if included
 
 # geometries
-airSoilInterface  = 2.0    # air - halfspace interface
-gradientStart     = airSoilInterface  # can be used to let the gradient start under the surface
+airSoilInterface  = 1.5    # air - halfspace interface
+gradientStart     = airSoilInterface - h   # can be used to let the gradient start under the surface
                                       # this will include an upper halfpspace with er_0 in the model
 thicknessBottomRef = 0.3   # m, thickness of bottom reflector
 
 #Time
-tSim  = 2e-7     # time window simulation
+tSim  = 1.5e-7     # time window simulation
 tSnap = tSim     # time window for animation to save
 
+
+# Resolution / Grid Size
+resolutionX  = 0.01
+resolutionY  = 0.01
+resolutionZ  = 0.01
+
 # Antenna Position
-dx              = 10.0  # [m] TX-RX distance
-buffer          = 0.3   # [m] buffer from each side of x-direction
-nCellAboveInter = 3     # [m] antennas are placed above air soil interface  
+dx              = 6                 # [m] TX-RX distance
+buffer          = 25* resolutionX   # [m] buffer from each side of x-direction
+nCellAboveInter = 5                 # [m] antennas are placed above air soil interface  
+
+# Domain Geometries
+xDimNet = 2*buffer + dx
+if is3D and (isRLFLA_TX or isRLFLA_RX):
+    yDimNet = 1.0
+else:
+    yDimNet = 2*buffer
+zDimNet = 2.0
 
 # nRX
-start_RX       = 0.5      # rel. to TX position
+start_RX       = 1      # rel. to TX position
 dx_RX          = 0.2      # spacing of TX
 
 
@@ -59,11 +75,6 @@ antFeedPoint = 0.26 # [m] from bottom of antenna
 polari       = 'y'  # Polarisation       
 
 
-# Resolution / Grid Size
-resolutionX  = 0.01
-resolutionY  = 0.01
-resolutionZ  = 0.01
-
 # only for van der Kruk Gradient
 if isVDK10Gradient or isVDK5Gradient:
     er_halfspace     = 4.1*isVDK5Gradient + 3.9*isVDK10Gradient
@@ -72,12 +83,7 @@ if isVDK10Gradient or isVDK5Gradient:
 assert gradientStart <= airSoilInterface, "Gradient can not be above air soil interface"
 
 freqDipole       = 200e6   # Frequency of point source
-nPml             = 100     # number of PML cells from each side of domain 
-
-# Domain Geometries
-xDimNet = 2*buffer + dx
-yDimNet = 1.5
-zDimNet = 3.0
+nPml             = 50     # number of PML cells from each side of domain 
 
 ############################ Start of Model ############################  
 
@@ -110,14 +116,15 @@ if isBottomReflector:
 
 # Set Directory and Title name
 if gradientStart != airSoilInterface:
-    dirName += 'Goffset%.1fm' % (airSoilInterface - gradientStart)
+    dirName += 'Goffset%.2fm' % (airSoilInterface - gradientStart)
 if start_RX != dx:
     dirName += 'RX0_%.1fm_dxRX%.2fm' %(start_RX, dx_RX)
 
-if isRLFLA_TX:
-    dirName += 'TX-RLA'
 if isRLFLA_RX:
     dirName += 'RX-RLA'
+
+if is3D:
+    dirName += '3D'
 
 dirName += nameIdentifier 
 
@@ -134,9 +141,15 @@ if is3D:
     fid.write('#domain: %.3f %.3f %.3f\n' %( xDimAll,
                                              yDimAll,
                                              zDimAll))
+    if isRLFLA_TX: # voltage source is not in the center of the RLFLA
+        TXPos = (nPml*resolutionX + buffer,       0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
+    else:
+        TXPos = (nPml*resolutionX + buffer,       0.5*yDimAll, airSoilInterface + nCellAboveInter * resolutionZ)
 
-    TXPos = (nPml*resolutionX + buffer,       0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
-    RXPos = (nPml*resolutionX + buffer + dx,  0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
+    if isRLFLA_RX: # receiver is not in the center of the RLFLA
+        RXPos = (nPml*resolutionX + buffer + dx,  0.5*yDimAll-antLength/2+antFeedPoint, airSoilInterface + nCellAboveInter * resolutionZ)
+    else:
+        RXPos = (nPml*resolutionX + buffer + dx,  0.5*yDimAll, airSoilInterface + nCellAboveInter * resolutionZ)
 
     # PML cells
     fid.write('#pml_cells: %d\n' %(nPml))
@@ -163,7 +176,7 @@ fid.write('#time_window: %e\n' %(tSim))
 # Halfspace
 
 
-fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_halfspace, 0, 1, 0, 'half_space'))
+fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_halfspace, conductivity, 1, 0, 'half_space'))
 
 
 # Boxes
@@ -173,12 +186,12 @@ fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' % (0,0,0,
                                           xDimAll, yDimAll, airSoilInterface, 'half_space'))
 
 if isBottomReflector:
-    fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_bottom_reflector, 0, 1, 0, 'bottom_reflector'))
+    fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_bottom_reflector, conductivity, 1, 0, 'bottom_reflector'))
     fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' % (0,0,0,
                                             xDimAll, yDimAll, thicknessBottomRef, 'bottom_reflector'))
 
 if gradientStart != airSoilInterface:
-    fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0, 0, 1, 0, 'upper_half_space'))
+    fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0, conductivity, 1, 0, 'upper_half_space'))
 
     fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' % (0,0,gradientStart,
                                           xDimAll, yDimAll, airSoilInterface, 'upper_half_space'))
@@ -189,7 +202,7 @@ if isGradient:
     deltaEr     = (er_halfspace - er_0) / nLayers
 
     for iLayer in range(nLayers):
-        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0 + iLayer*deltaEr, 0, 1, 0, 'layer' + str(iLayer+1)))
+        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0 + iLayer*deltaEr, conductivity, 1, 0, 'layer' + str(iLayer+1)))
 
         fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZ,
                                                 xDimAll, yDimAll, gradientStart - iLayer * resolutionZ,
@@ -218,7 +231,7 @@ if isVDK5Gradient or isVDK10Gradient:
     assert len(zModel) == len(epsModel)
     nLayers  = len(epsModel)
     for iLayer in range(nLayers):
-        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(epsModel[iLayer], 0, 1, 0, 'layer' + str(iLayer+1)))
+        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(epsModel[iLayer], conductivity, 1, 0, 'layer' + str(iLayer+1)))
 
         fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZ,
                                         xDimAll, yDimAll, gradientStart - iLayer * resolutionZ,
