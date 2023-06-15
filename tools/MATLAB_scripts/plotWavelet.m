@@ -1,13 +1,15 @@
 clear
-close all
+% close all
+% Plot https://docs.gprmax.com/en/latest/plotting.html - gaussian
 %% Input
 
-freq = 92e6;
+freq = 200e6;
 tStart  = -1e-8;
 tEnd    = 4e-8;
 lw = 2;
-
-fcut = 3e8;
+nanoConverson = 1e9;
+megaConversion = 1e-6;
+fcut = 600e6;
 
 n        = 17;
 nSamples = 2^n;
@@ -17,9 +19,16 @@ t = (tEnd-tStart);
 dt = t/nSamples;
 tVector = tStart + dt*(0:nSamples-1);
 
-zeta    =   2*pi^2*freq.^2;
-chi     = 1./freq;
-w       = exp(-zeta*(tVector-chi).^2);
+
+
+% Gaussian
+% zeta    =   2*pi^2*freq.^2;
+% chi     = 1./freq;
+% w = exp(-zeta*(tVector-chi).^2);
+% Ricker
+zeta = pi^2*freq^2;
+chi = sqrt(2)/freq;
+w = -(2*zeta*(tVector-chi ).^2 - 1 ).*exp(-zeta*(tVector-chi).^2);   
 
 w(1) = 0;
 w(end) = 0;
@@ -38,21 +47,26 @@ figure
 t = tiledlayout(3,1);
 
 Plot = nexttile;
-plot(tVector, w, 'LineWidth', lw)
+% figure
+% xlabel('time (ns)')
+% title(sprintf('Ricker %dMHz',freq/1e6))
+% grid on
+% xlim([0 tVector(end)*nanoConverson])
+% set(gca,'FontSize',25)
 title('Initial Wavelet')
-grid on
+plot(tVector*nanoConverson, w, 'LineWidth', lw)
 
 wPlot = nexttile;
-plot(tVector, wHat, 'LineWidth', lw)
+plot(tVector*nanoConverson, wHat, 'LineWidth', lw)
 title('First Derivative Wavelet')
 grid on
 
 wwPlot = nexttile;
 findpeaks(wHatHat)
-plot(tVector,wHatHat, 'LineWidth', lw)
+plot(tVector*nanoConverson,wHatHat, 'LineWidth', lw)
 title('Second Derivative Wavelet')
 grid on
-xlabel('times (s)')
+xlabel('time (ns)')
 
 [pks,locs] = findpeaks(wHatHat,'MinPeakProminence',0.1*max(abs(wHatHat)));
 fprintf('2nd derivative: First maximum %e at %e s\n', pks(1), tVector(locs(1)))
@@ -71,16 +85,22 @@ figure
 t = tiledlayout(3,1);
 
 Plotfft = nexttile;
-plot(fAxis, DataNorm(abs(w_fft(1:numel(fAxis))), scale) , 'LineWidth', lw)
-title('FFT Initial Wavelet')
+figure
+plot(fAxis*megaConversion, DataNorm(abs(w_fft(1:numel(fAxis))), scale) , 'LineWidth', lw)
+xlabel('frequency (MHz)')
+title(sprintf('FFT Ricker %dMHz',freq/1e6))
+set(gca,'FontSize',25)
 grid on
-xlim([0 fcut])
+xlim([0 fcut*megaConversion])
+% title('FFT Initial Wavelet')
+
+
 
 [~, idxmaxFreq] = max(abs(w_fft(1:numel(fAxis))));
 fprintf('0nd derivative: max freq at %e Hz\n', fAxis(idxmaxFreq))
 
 wPlotfft = nexttile;
-plot(fAxis, DataNorm(abs(wHat_fft(1:numel(fAxis))), scale), 'LineWidth', lw)
+plot(fAxis*megaConversion, DataNorm(abs(wHat_fft(1:numel(fAxis))), scale), 'LineWidth', lw)
 title('FFT First Derivative Wavelet')
 grid on
 xlim([0 fcut])
@@ -89,10 +109,10 @@ xlim([0 fcut])
 fprintf('1nd derivative: max freq at %e Hz\n', fAxis(idxmaxFreq))
 
 wwPlotfft = nexttile;
-plot(fAxis, DataNorm(abs(wHatHat_fft(1:numel(fAxis))), scale), 'LineWidth', lw)
+plot(fAxis*megaConversion, DataNorm(abs(wHatHat_fft(1:numel(fAxis))), scale), 'LineWidth', lw)
 title('FFT Second Derivative Wavelet')
 grid on
-xlabel('frequency (Hz)')
+xlabel('frequency (MHz)')
 xlim([0 fcut])
 
 [~, idxmaxFreq] = max(abs(wHatHat_fft(1:numel(fAxis))));

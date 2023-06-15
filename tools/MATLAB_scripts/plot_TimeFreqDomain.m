@@ -5,7 +5,7 @@ if nargin < 2 || isempty(component)
 end
 
 if nargin < 3 || isempty(fcut)
-    fcut = 6e8;
+    fcut = 600;
 end
 
 if nargin < 4 || isempty(nonZeroThresh)
@@ -26,10 +26,11 @@ nField     = numel(fieldNames);
 
 %% PARAMETER
 lw            = 1.5;    % line width
-fs            = 18;     % font size
+fs            = 25;     % font size
 %% PLOT
 % TIME DOMAIN
 f = figure;
+% set(f,'Color','white');
 t = tiledlayout(1,2, 'Parent',f); %, 'Units', 'normalized','OuterPosition',[0 0.15 1 0.85]);
 timePlot = nexttile;
 grid on
@@ -37,8 +38,10 @@ grid on
 hold on
 set(gca, 'FontSize', fs)
 
+
 % legend
-xlabel('Time (s)')
+xlabel('Time (ns)')
+ylabel('Field strength [V/m]')
 title([component ' - Time Domain'])
 
 lg = legend('Interpreter','none', 'FontSize', 0.75*fs, 'Orientation','Vertical','NumColumns',2);
@@ -52,7 +55,7 @@ set(gca, 'FontSize', fs)
 hold on
 
 xlim([0 fcut])
-xlabel('Frequency (Hz)')
+xlabel('Frequency (MHz)')
 
 
 nTraces = 0;
@@ -86,8 +89,8 @@ m = uimenu('Text','USER-Options');
 uimenu(m,'Text','Save Figure',...
          'MenuSelectedFcn',{@SaveFigure,fullfile(pwd)});
 
-uimenu(m, 'Text', 'Add Line', 'MenuSelectedFcn', ['allData = addLine(timePlot, freqPlot, pathRoot,trdSemester,' ...
-                                                 'component, normalizationTime, lw, nonZeroThresh, normalizationFreq, allData);'] ); 
+uimenu(m, 'Text', 'Add Line', 'MenuSelectedFcn', {@addLine,timePlot, freqPlot, pwd,'', ...
+                                                 component, normalizationTime, lw, normalizationFreq} ); 
 
 % labels
 changeLabels = uimenu(m, 'Label', 'Change Labels');
@@ -109,41 +112,9 @@ process     = uimenu(m, 'Label', 'Process');
 uimenu(process, 'Text', 'Overlap at first break', 'MenuSelectedFcn', {@overlapLines, timePlot, component, lw, fs, fcut} )
 uimenu(process, 'Text', 'Add Wavelet (Mexican hat)', 'MenuSelectedFcn', 'allData = addWavelet(allData,timePlot, freqPlot, component, nonZeroThresh, lw);' )
 uimenu(process, 'Text', 'Select Time Window for FFT', 'MenuSelectedFcn', {@selectTimeWindow,timePlot, fcut, lw, fs, component})
+uimenu(process, 'Text', 'Normalize Traces', 'MenuSelectedFcn', {@normalize_traces,timePlot, freqPlot,component,fs, lw,fcut})
 
 
-
-
-%% changeLegendNames
-function changeLegendNames(src, event)
-
-lgObj = findobj(gcf,'Type','Legend');
-prompt = lgObj.String;
-
-dlgtitle = 'Change Legend Entry';
-
-answer = inputdlg(prompt',dlgtitle,[1 150],prompt');
-
-set(lgObj,'String',answer)
-
-end
-%% Add title
-
-function addTitle(src, event, t, fs)
-
-dlgtitle = 'AddTitle';
-
-if isempty(t.Title.String)
-    lgObj = findobj(gcf,'Type','Legend');
-    prompt = lgObj.String(1);
-else
-    prompt = t.Title.String;
-end
-
-answer = inputdlg('New title',dlgtitle,[1 150],prompt);
-
-title(t,answer, 'FontSize', 1.3*fs)
-
-end
 
 
 end

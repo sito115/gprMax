@@ -12,11 +12,11 @@ if not os.path.exists(saveFolder):
     print('The file will be saved in the pwd folder %s\n' %(saveFolder))
 
 # Model Settings
-nameIdentifier = ''  # to be included in title and geometry file (optional)
+nameIdentifier = '300PML'  # to be included in title and geometry file (optional)
 
-isRLFLA_TX        = True    # use RLFLA or point antennae
+isRLFLA_TX        = False    # use RLFLA or point antennae
 isRLFLA_RX        = False   # use RLFLA or point antennae
-is3D              = True    # use 3D Model or 2D [1 cell in y direction]
+is3D              = False    # use 3D Model or 2D [1 cell in y direction]
 isGradient        = False   # include gradient in model
 isVDK5Gradient    = False   # gradient from page 186 thesis jan van der kruk (2001)
 isVDK10Gradient   = False   # gradient from page 186 thesis jan van der kruk (2001)
@@ -28,21 +28,21 @@ nSnaps      = -1        # negative if no animation is created
 isGeometry  = False     # create geometry file, true false
 
 # Materials
-er_0                  = 6    # permittivity at start defined by 'gradientStart'
+er_0                  = 5    # permittivity at start defined by 'gradientStart'
 
 er_halfspace          = 5    # permittivity of lower halfspace
 
-h                     = 0.3   # thickness of gradient
+h                     = 0.5   # thickness of gradient
 er_bottom_reflector   = 20    # permittivity of bottom reflector if included
 
 # geometries
-airSoilInterface  = 1.5    # air - halfspace interface
-gradientStart     = airSoilInterface - h   # can be used to let the gradient start under the surface
+airSoilInterface  = 0.9   # air - halfspace interface
+gradientStart     = airSoilInterface   # can be used to let the gradient start under the surface
                                       # this will include an upper halfpspace with er_0 in the model
 thicknessBottomRef = 0.3   # m, thickness of bottom reflector
 
 #Time
-tSim  = 1.5e-7     # time window simulation
+tSim  = 1e-7     # time window simulation
 tSnap = tSim     # time window for animation to save
 
 
@@ -53,27 +53,24 @@ resolutionZ  = 0.01
 
 # Antenna Position
 dx              = 6                 # [m] TX-RX distance
-buffer          = 25* resolutionX   # [m] buffer from each side of x-direction
-nCellAboveInter = 5                 # [m] antennas are placed above air soil interface  
-
-# Domain Geometries
-xDimNet = 2*buffer + dx
-if is3D and (isRLFLA_TX or isRLFLA_RX):
-    yDimNet = 1.0
-else:
-    yDimNet = 2*buffer
-zDimNet = 2.0
-
-# nRX
-start_RX       = 1      # rel. to TX position
-dx_RX          = 0.2      # spacing of TX
-
+buffer          = 20* resolutionX   #(20) [m] buffer from each side of x-direction
+nCellAboveInter = 5                 # [m] antennas are placed n cells above air soil interface  
+start_RX        = 1.0               # [m] rel. to TX position (start offset)
+dx_RX           = 0.2               # [m] spacing of TX
 
 # Antenna Parameters
 antLength    = 0.6  # [m]
 antFeedPoint = 0.26 # [m] from bottom of antenna
 polari       = 'y'  # Polarisation       
 
+# Domain Geometries
+xDimNet = 2*buffer + dx
+if is3D and (isRLFLA_TX or isRLFLA_RX):
+    yDimNet = antLength + 2*15*resolutionY
+else:
+    yDimNet = 2*buffer
+
+zDimNet = airSoilInterface + 25*resolutionZ
 
 # only for van der Kruk Gradient
 if isVDK10Gradient or isVDK5Gradient:
@@ -83,14 +80,14 @@ if isVDK10Gradient or isVDK5Gradient:
 assert gradientStart <= airSoilInterface, "Gradient can not be above air soil interface"
 
 freqDipole       = 200e6   # Frequency of point source
-nPml             = 50     # number of PML cells from each side of domain 
+nPml             = 300     # 20 number of PML cells from each side of domain 
 
 ############################ Start of Model ############################  
 
+# calculate gross geoemtries adding pml layers
 xDimAll = xDimNet + 2*nPml*resolutionX
 yDimAll = yDimNet + 2*nPml*resolutionY
 zDimAll = zDimNet + 2*nPml*resolutionZ
-
 
 # write FileName
 dirName = 'HaSp_dx%.1fm_eps%.1f_' %(dx,er_halfspace)
@@ -131,6 +128,7 @@ dirName += nameIdentifier
 
 fileName = os.path.join(saveFolder, dirName + '.in')
 fid = open(fileName, 'w')
+fid.write('----------Metadata----------\n')
 fid.write('#dx_dy_dz: %.3f %.3f %.3f\n' %(resolutionX,resolutionY,resolutionZ))
 
 thicknessBottomRef  += nPml * resolutionZ
@@ -166,7 +164,7 @@ else:
     fid.write('#pml_cells: %d %d %d %d %d %d\n' %(nPml, 0, nPml, nPml, 0, nPml))
 
 # rx-start
-rx_x_array     = np.arange(TXPos[0] + start_RX, TXPos[0] + dx + dx_RX, dx_RX)
+rx_x_array     = np.arange(TXPos[0] + start_RX, TXPos[0] + dx, dx_RX)
 assert rx_x_array[-1] - nPml*resolutionX < xDimNet, 'RX inside PML'
 
 # Time # PML cells
@@ -175,7 +173,7 @@ fid.write('#time_window: %e\n' %(tSim))
 
 # Halfspace
 
-
+fid.write('\n----------Materials and Geometries----------\n')
 fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_halfspace, conductivity, 1, 0, 'half_space'))
 
 
@@ -198,6 +196,7 @@ if gradientStart != airSoilInterface:
 
 # Gradient
 if isGradient:
+    fid.write('\n\t----------Gradient----------\n')
     nLayers     = int(np.round(h / resolutionZ))         # returns the nearest lower integer result
     deltaEr     = (er_halfspace - er_0) / nLayers
 
@@ -236,7 +235,7 @@ if isVDK5Gradient or isVDK10Gradient:
         fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZ,
                                         xDimAll, yDimAll, gradientStart - iLayer * resolutionZ,
                                         'layer' + str(iLayer+1)))
-
+fid.write('\n----------Sources----------\n')
 #### Y-polar
 if isRLFLA_TX:
     antenna_like_RLFLAText(x=TXPos[0],y=TXPos[1],z=TXPos[2],            # TX
@@ -250,7 +249,7 @@ else:
                                                           'GausDipole'))
 
 
-
+fid.write('\n----------Receivers----------\n')
 if isRLFLA_RX:
     for iRx, xRx in enumerate(rx_x_array): # RX
             antenna_like_RLFLAText(x=xRx,y=RXPos[1],z=RXPos[2],
@@ -264,10 +263,12 @@ else:
                                             RXPos[1],
                                             RXPos[2]))
 
+fid.write('\n----------Title (FileName)----------\n')
 fid.write('#title: %s\n' %(dirName))
 
 # Geometry
 if isGeometry:
+    fid.write('\n----------Geometry----------\n')
     if isSlice: #2D
         fid.write('#geometry_view: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %s n\n' %(
                 0,TXPos[1],0,xDimAll, TXPos[1]+resolutionY, zDimAll,
@@ -280,6 +281,7 @@ if isGeometry:
 
 # Snapshots
 if nSnaps > 0:
+    fid.write('\n----------Snaps----------\n')
     dt = tSnap/nSnaps 
     # set dt to 0.5e-9
     if isSlice and is3D:

@@ -14,9 +14,9 @@ folderSnapsAll  = 'C:\\Users\\thomas\\Downloads\\snaps'
 mpl.rcParams['animation.ffmpeg_path'] = ffmepPath
 
 class snapshots:
-    def __init__(self, foldername, fileGeom, title, scaling, dt):
+    def __init__(self, foldername, folderGeo, title, scaling, dt):
         self.folderSnap = foldername
-        self.fileGeom   = os.path.join(fileGeom,os.path.basename(foldername).replace('_snaps', '.vti'))
+        self.fileGeom   = os.path.join(folderGeo,os.path.basename(foldername).replace('_snaps', '.vti'))
         self.title      = title
         self.scaling    = scaling
         self.dt         = dt
@@ -28,17 +28,78 @@ class snapshots:
         self.plane           = 'y'
         self.idx             = 0
 
-snap1 = snapshots(os.path.join(folderSnapsAll,'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.5mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps'),
-                 os.path.join(folderGeo,'2_TwoLayer'),
-                 'Two Layer (5-12.5) RLFLA TX RX h=0.5m',1e-5,1.2e-9)
+PrefHomo     = '1_Homogeneous'
+Pref2Layer   = '2_TwoLayer'
+PrefIncrGrad = '3_IncreasingGradient'
+PrefDecGrad  = '4_DecreasingGradient'
+dt = 1.2e-9
+scaling = 1e-5
 
-snap2 = snapshots(os.path.join(folderSnapsAll,'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.2mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps'),
-                 os.path.join(folderGeo,'2_TwoLayer'),
-                 'Two Layer (5-12.5) RLFLA TX RX h=0.25m',1e-5,1.2e-9)
+preFixList = [PrefHomo] +3*[Pref2Layer, PrefIncrGrad,PrefDecGrad]
+preFixList = 2*preFixList
 
-snap3 = snapshots(os.path.join(folderSnapsAll,'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.1mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps'),
-                 os.path.join(folderGeo,'2_TwoLayer'),
-                'Two Layer (5-12.5) RLFLA TX RX h=0.10m',1e-5,1.2e-9)
+titleNames = [
+'Homogeneous (5) TX RLFA',
+'Two Layer (12.5-5)  TX RLFA - h=0.10m',
+'Increasing (5-12.5) TX RLFA - h=0.10m',
+'Decreasing (12.5-5)  TX RLFA - h=0.10m',
+'Two Layer (12.5-5)  TX RLFA - h=0.25m',
+'Increasing (5-12.5) TX RLFA - h=0.25m',
+'Decreasing (12.5-5)  TX RLFA - h=0.25m',
+'Two Layer (12.5-5)  TX RLFA - h=0.50m',
+'Increasing (5-12.5) TX RLFA - h=0.50m',
+'Decreasing (12.5-5)  TX RLFA - h=0.50m',
+'Homogeneous (5) TX RLFA - RX RLFA',
+'Two Layer (12.5-5)  TX RLFA - RX RLFA - h=0.10m',
+'Increasing (5-12.5) TX RLFA - RX RLFA - h=0.10m',
+'Decreasing (12.5-5)  TX RLFA - RX RLFA - h=0.10m',
+'Two Layer (12.5-5)  TX RLFA - RX RLFA - h=0.25m',
+'Increasing (5-12.5) TX RLFA - RX RLFA - h=0.25m',
+'Decreasing (12.5-5)  TX RLFA - RX RLFA - h=0.25m',
+'Two Layer (12.5-5)  TX RLFA - RX RLFA - h=0.50m',
+'Increasing (5-12.5) TX RLFA - RX RLFA - h=0.50m',
+'Decreasing (12.5-5)  TX RLFA - RX RLFA - h=0.50m'
+ ]
+
+snapNames = [
+'HaSp_dx6.0m_eps5.0_00RLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.1mRX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.1mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.1mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.2mRX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.2mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.5mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.5mRX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.5mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.2mRLFLARX0_1.0m_dxRX0.20mTX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_00RLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.1mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.1mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.10mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.2mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.2mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.25mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_00er0_5.0RLFLAGoffset0.5mRX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps12.5_++er0_5.0_h0.5mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps',
+'HaSp_dx6.0m_eps5.0_--er0_12.5_h0.50mRLFLARX0_1.0m_dxRX0.20mTX-RLARX-RLA_snaps'
+]
+
+
+
+
+
+objs = list()
+for iSnap in range(len(snapNames)):
+    snapName = snapNames[iSnap]
+    pref     = preFixList[iSnap]
+    titleString    = titleNames[iSnap]
+    objs.append(
+        snapshots(os.path.join(folderSnapsAll,snapName),
+                  os.path.join(folderGeo,pref),
+                  titleString,scaling,dt))
+
+
+
 
 for snap in gc.get_objects():
     if isinstance(snap, snapshots):
@@ -60,6 +121,19 @@ for snap in gc.get_objects():
             print('Saving  %s...' %(saveAbs))
             curr_animation.save(saveAbs)
             print('Done\n')
+
+
+
+
+
+## RLFLA ANIMATIONS ###
+
+
+
+
+
+
+
 
     # anim.append(animation)
 

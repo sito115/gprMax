@@ -1,11 +1,11 @@
-clear, clc, close all
+clear, clc %, close all
 addpath(genpath(pwd))
 
 %%
 % Dialog
-prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency', 'Threshold first non-zero value',...
+prompt = {'Component [Ex, Ey, Ez]', 'Cutoff Frequency [MHz]', 'Threshold first non-zero value',...
           'Normalize Time? [1 or 0]', 'Normalize Frequency? [1 or 0]','load .mat file?'};
-answer = inputdlg(prompt','Define Parameters',[1 150],{'Ey', '6e8', '1e-1', '0', '0','0'});
+answer = inputdlg(prompt','Define Parameters',[1 150],{'Ey', '500', '1e-1', '0', '0','0'});
 
 component         = answer{1};
 fcut              = str2double(answer{2});
@@ -21,7 +21,7 @@ if exist(pathRoot,'dir')~=7
     trdSemester  = '';
     figureFolder ='';
 else
-    trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax\thomas\python';
+    trdSemester  = '3. Semester - Studienunterlagen\Thesis\gprMaxFolder\gprMax';
     figureFolder = '4. Semester - Thesis\OutputgprMax\Figures';
 end
 
@@ -46,7 +46,7 @@ if ~isMatFile
             isManual = 1;
         case 'Default (only for Thomas)'
             isManual = 0;
-            pathname        = fullfile(pathRoot, trdSemester, 'Results');   
+            pathname        = fullfile(pathRoot, trdSemester, 'ProcessedFiles');   
             allData         = load_output(allData,filenameArray, pathname);
         case 'Cancel'
             return
@@ -55,7 +55,7 @@ if ~isMatFile
     %% Start Loading Data
     isFile = 1;
     while isFile == 1
-        [filenameArray, pathname, check] = uigetfile([fullfile(pathRoot,trdSemester,'Results') '\*.out'],...
+        [filenameArray, pathname, check] = uigetfile([fullfile(pathRoot,trdSemester,'ProcessedFiles') '\*.out'],...
                                     'Select gprMax output file to plot B-scan', 'MultiSelect', 'on');
         
         if check == 0   % user pressed cancel

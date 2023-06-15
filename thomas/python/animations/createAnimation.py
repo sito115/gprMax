@@ -9,7 +9,7 @@ from displayGeometry import get_material2DArray
 
 def createAnimation(fileGeom,folderSnaps,
                     field, plane,idx, inter, alphaValue,
-                    absoluteScaling, title,dt, ax, fig):
+                    absoluteScaling, title,dt, ax, fig, isSaveFrame = False, gridSize = 0.01):
     '''
     fileGeom: absolute path of geometry file or None
     folderSnaps: absolute path of folder containing snaps
@@ -30,6 +30,7 @@ def createAnimation(fileGeom,folderSnaps,
         return os.path.join(path,file)
 
     files       = os.listdir(folderSnaps)
+    files = [i for i in files if i.endswith('.vti')]
     # filesSorted = natsorted(files)
     filesSorted = sorted(files, key=lambda x:int(x.split('_')[1].split('.')[0].split('snap')[1]))
 
@@ -43,7 +44,8 @@ def createAnimation(fileGeom,folderSnaps,
         ax.imshow(geometry2D,
                 origin='lower',
                 cmap = 'binary',
-                alpha = 0.6)
+                alpha = 0.6,
+                extent=[0,geometry2D.shape[1]*gridSize,0,geometry2D.shape[0]*gridSize])
 
               # binary, Greens
 
@@ -55,7 +57,8 @@ def createAnimation(fileGeom,folderSnaps,
                         origin='lower',
                         alpha=alphaValue,
                         vmin=-absoluteScaling,
-                        vmax=absoluteScaling)
+                        vmax=absoluteScaling,
+                        extent=[0,firstData.shape[1]*gridSize,0,firstData.shape[0]*gridSize])
     text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
 
 
@@ -64,7 +67,12 @@ def createAnimation(fileGeom,folderSnaps,
         data = get_2D_VTKarray(field, component,plane,idx,
                                 createFullPath(folderSnaps,filesSorted[i]))
         im.set_data(data)
-        text.set_text('Time: %.3e s' %(i*dt))
+        time = i*dt*1e9
+        text.set_text('Time: %.3g ns' %(time))
+
+        if isSaveFrame:
+            plt.savefig(createFullPath(folderSnaps,'Frame%.2f_ns.png'%(time)))
+
         return im
 
     ani = animation.FuncAnimation(fig, animationUpdate, frames=range(len(filesSorted)),
@@ -76,8 +84,8 @@ def createAnimation(fileGeom,folderSnaps,
 
     # Set plot title and axes labels
     ax.set(
-        xlabel = "[cm]",
-        ylabel = "[cm]")
+        xlabel = "[m]",
+        ylabel = "[m]")
 
     ax.set_title(title)
     return ani
@@ -85,22 +93,27 @@ def createAnimation(fileGeom,folderSnaps,
 
 if __name__ == '__main__':
     folderGeo       = r"C:\\OneDrive - Delft University of Technology\\3. Semester - Studienunterlagen\\Thesis\\gprMaxFolder\\gprMax\\ProcessedFiles"
-    snapFile        = askdirectory()
+    case = '1_Homogeneous' # \\3_IncreasingGradient
+    folderGeo = os.path.join(folderGeo,case)
+    snapFile = None
+    if snapFile is None:
+        snapFile        = askdirectory()
     snapFolderName  = os.path.basename(snapFile)
-    #geomFile        = os.path.join(folderGeo,'',snapFolderName.replace('_snaps','.vti'))
+    geomFile        = os.path.join(folderGeo,'',snapFolderName.replace('_snaps','.vti'))
     field           = 'E-field'
     inter           = 400
     alphaValue      = 0.5
     absoluteScaling = 1e-5
     plane           = 'y'
     idx             = 0
-    isSave          = True
-    dt              = 1                        
+    dt              = 2e-9          
+    isSaveFrame     = True        
+    fileName  = '' #Increasing-(5-12.5)-0.5m-2D-200MHz'#snapFolderName      
 
     fig, ax = plt.subplots()
 
-    anim = createAnimation(None,snapFile,
+    anim = createAnimation(geomFile,snapFile,
                     field, plane,idx, inter, alphaValue,
-                    absoluteScaling, snapFolderName,dt, ax, fig)
+                    absoluteScaling, fileName,dt, ax, fig,isSaveFrame)
     
     plt.show()

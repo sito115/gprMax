@@ -73,6 +73,9 @@ end
 header.RxData = table(rxNames, rxPositions,...
                 'VariableNames',{ 'Name', 'Position'});
 
+scrPos      = header.SrcData.Position(1,1); % x-coordinates
+offset      = header.RxData.Position(:,1) - scrPos; % x-coordinates
+header.Offset_x = offset;
 fprintf('Done \n')
 %% FFT of Components
 if isFFT
