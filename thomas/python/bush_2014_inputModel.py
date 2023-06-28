@@ -8,6 +8,7 @@ import os
 # Oututs
 isGeometry = True # Write an geometry file
 isSlice    = True # True:Geometry is a slice in the receiver plane, False: 3D Geometry File
+nSnaps     = 100
 
 # Check default folder existence, if not use wd
 saveFolder  = 'ProcessedFiles'
@@ -20,15 +21,15 @@ if not os.path.exists(saveFolder):
 
 
 # Parameters
-extraInf    = '10PML'     # will be added to as suffix to the generated input file
+extraInf    = '20PML-small'     # will be added to as suffix to the generated input file
 
 size        = 0.03
 
-warrPos     = 110        # src position for Warr, choose between [10, 30, 40, 50, 80, 90, 100, 110]
+warrPos     = 10        # src position for Warr, choose between [10, 30, 40, 50, 80, 90, 100, 110]
 
 
 ds0Rx       = 0.9         #initial offset to source [m] (table 1 n_x)
-maxRxOffset = 1.9        # max receiver offset to source [m] (table 1 n_x)
+maxRxOffset = 1.7        # max receiver offset to source [m] (table 1 n_x)
 
 
 dsRx        = 0.1       # receiver spacing [m] (table 1)
@@ -46,10 +47,10 @@ cellSize = (size,size,size) # x,y,z
 nBufferCells = 15
 # the direct ground wave which propagates to a depth of up to ∼30 cm - stated in Introduction of II. METHODOLOGY 
 buffer           = nBufferCells*size         # buffer between source and last receiver to start of PML region [m]
-hSoil            = 0.4         # thickness of halfspace [m]
-hAir             = 0.2         # thickness of free_space [m]
+hSoil            = 0.4             # thickness of halfspace [m]
+hAir             = 0.2 #nBufferCells*size         # thickness of free_space [m]
 yDimNet          = 2*nBufferCells*size     # net size of y-Dimension (without PMLs)
-nPml             = 10          # number of PML cells from each side of domain 
+nPml             = 20          # number of PML cells from each side of domain 
 nCellsAboveInt   = 3           # how many cells between source/receiver and soil-air interface
 
 
@@ -134,6 +135,24 @@ if isGeometry:
             0,0,0,xDimAll, yDimAll, zDimAll,
             cellSize[0], cellSize[1], cellSize[2], name))
         
+if nSnaps > 0:
+    fid.write('\n----------Snaps----------\n')
+    dt = tSim/nSnaps 
+    # set dt to 0.5e-9
+    if isSlice:
+        for i in range(1, nSnaps+1):
+            name = 'halfspace' + 'dt%.2e_snap' %(i*dt)
+            fid.write('#snapshot: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %e %s\n' %(
+                        0,TXPos[1],0,xDimAll, TXPos[1]+cellSize[1], zDimAll,  
+                         cellSize[0], cellSize[1], cellSize[2],i*dt, name + str(i) ))
+    else:
+        for i in range(1, nSnaps+1):
+            name = 'halfspace' + 'dt%.2e_snap' %(i*dt)
+            fid.write('#snapshot: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %e %s\n' %(
+                        0, 0, 0, xDimAll, yDimAll, zDimAll,  
+                        cellSize[0], cellSize[1], cellSize[2], i*dt, name + str(i) ))
+
+
 fid.close()
 print('Run successfull!')
 print('Input File saved in:')

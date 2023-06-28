@@ -12,50 +12,58 @@ if not os.path.exists(saveFolder):
     print('The file will be saved in the pwd folder %s\n' %(saveFolder))
 
 # Model Settings
-nameIdentifier = '300PML'  # to be included in title and geometry file (optional)
+nameIdentifier = ''  # to be included in title and geometry file (optional)
 
 isRLFLA_TX        = False    # use RLFLA or point antennae
 isRLFLA_RX        = False   # use RLFLA or point antennae
-is3D              = False    # use 3D Model or 2D [1 cell in y direction]
-isGradient        = False   # include gradient in model
+is3D              = True    # use 3D Model or 2D [1 cell in y direction]
+isGradient        = True   # include gradient in model for permittivity
 isVDK5Gradient    = False   # gradient from page 186 thesis jan van der kruk (2001)
 isVDK10Gradient   = False   # gradient from page 186 thesis jan van der kruk (2001)
 isSlice           = True    # use 2D slide for movies and geometry through feeding point of Antenna
 isBottomReflector = False   # include a bottem reflecotr in model
-conductivity      = 0.00   # S/m
+isConductivityGradient = False
+
+conductivity      = 1e-3   # S/m
+conductivityStart = 1e-3   # S/m  
+
+externalWavelet = False
+
 # Geometry Settings
 nSnaps      = -1        # negative if no animation is created
-isGeometry  = False     # create geometry file, true false
+isGeometry  = True      # create geometry file, true false
+geomScaling = 1         # Factor for mesh size in geometry and snapshots
 
 # Materials
 er_0                  = 5    # permittivity at start defined by 'gradientStart'
+er_halfspace          = 12.5    # permittivity of lower halfspace
 
-er_halfspace          = 5    # permittivity of lower halfspace
-
-h                     = 0.5   # thickness of gradient
+h                     = 0.6   # thickness of gradient
 er_bottom_reflector   = 20    # permittivity of bottom reflector if included
 
 # geometries
-airSoilInterface  = 0.9   # air - halfspace interface
+airSoilInterface  = h + 0.35   # air - halfspace interface
 gradientStart     = airSoilInterface   # can be used to let the gradient start under the surface
                                       # this will include an upper halfpspace with er_0 in the model
 thicknessBottomRef = 0.3   # m, thickness of bottom reflector
 
 #Time
-tSim  = 1e-7     # time window simulation
+tSim  = 2e-7     # time window simulation
 tSnap = tSim     # time window for animation to save
 
 
 # Resolution / Grid Size
-resolutionX  = 0.01
-resolutionY  = 0.01
-resolutionZ  = 0.01
+resolutionX  = 0.005
+resolutionY  = 0.005
+resolutionZ  = 0.005
+
+resolutionZGradient = resolutionZ #resolutionZ # Resolution of each Layer in Gradient Layer
 
 # Antenna Position
 dx              = 6                 # [m] TX-RX distance
 buffer          = 20* resolutionX   #(20) [m] buffer from each side of x-direction
 nCellAboveInter = 5                 # [m] antennas are placed n cells above air soil interface  
-start_RX        = 1.0               # [m] rel. to TX position (start offset)
+start_RX        = 0.05               # [m] rel. to TX position (start offset)
 dx_RX           = 0.2               # [m] spacing of TX
 
 # Antenna Parameters
@@ -66,7 +74,7 @@ polari       = 'y'  # Polarisation
 # Domain Geometries
 xDimNet = 2*buffer + dx
 if is3D and (isRLFLA_TX or isRLFLA_RX):
-    yDimNet = antLength + 2*15*resolutionY
+    yDimNet = antLength + 2*20*resolutionY
 else:
     yDimNet = 2*buffer
 
@@ -80,7 +88,7 @@ if isVDK10Gradient or isVDK5Gradient:
 assert gradientStart <= airSoilInterface, "Gradient can not be above air soil interface"
 
 freqDipole       = 200e6   # Frequency of point source
-nPml             = 300     # 20 number of PML cells from each side of domain 
+nPml             = 100     # 20 number of PML cells from each side of domain 
 
 ############################ Start of Model ############################  
 
@@ -102,6 +110,15 @@ elif isVDK5Gradient or isVDK10Gradient:
     dirName += 'VDK%d' %(5*isVDK5Gradient+10*isVDK10Gradient)
 else:
     dirName += '00'
+
+if isGradient and resolutionZ != resolutionZGradient:
+     dirName += 'resGrad%.2f' %(resolutionZGradient)
+
+if isConductivityGradient:
+    if conductivity < conductivityStart:
+        dirName += '--Con'
+    elif conductivity > conductivityStart:
+        dirName += '++Con'
 
 if isRLFLA_TX:
     dirName += 'RLFLA'
@@ -197,14 +214,21 @@ if gradientStart != airSoilInterface:
 # Gradient
 if isGradient:
     fid.write('\n\t----------Gradient----------\n')
-    nLayers     = int(np.round(h / resolutionZ))         # returns the nearest lower integer result
+    nLayers     = int(np.round(h / resolutionZGradient))         # returns the nearest lower integer result
     deltaEr     = (er_halfspace - er_0) / nLayers
 
-    for iLayer in range(nLayers):
-        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0 + iLayer*deltaEr, conductivity, 1, 0, 'layer' + str(iLayer+1)))
+    if isConductivityGradient:
+        deltaCon     = (conductivity - conductivityStart) / nLayers
+    else:
+        deltaCon     = 0
 
-        fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZ,
-                                                xDimAll, yDimAll, gradientStart - iLayer * resolutionZ,
+    for iLayer in range(nLayers):
+        fid.write('#material: %.5f %.5f %.5f %.5f %s\n' %(er_0 + iLayer*deltaEr,
+                                                          conductivityStart + iLayer*deltaCon,
+                                                          1, 0, 'layer' + str(iLayer+1)))
+
+        fid.write('#box: %.3f %.3f %.3f %.3f %.3f %.3f %s\n' %(0,0, gradientStart - (iLayer + 1)*resolutionZGradient,
+                                                xDimAll, yDimAll, gradientStart - iLayer * resolutionZGradient,
                                                 'layer' + str(iLayer+1)))
 
 
@@ -244,9 +268,15 @@ if isRLFLA_TX:
     
 else:
     
-    fid.write('#waveform: ricker %.3f %e %s\n' % (1, freqDipole, 'GausDipole'))
-    fid.write('#hertzian_dipole: %s %.3f %.3f %.3f %s\n' %(polari,TXPos[0],TXPos[1],TXPos[2],
-                                                          'GausDipole'))
+    if externalWavelet:
+        excitationFile = 'warr_Busch_10m_ini_ricker.txt.loop.4.SWE.out.prc.0.txt'
+        fid.write('#excitation_file: %s linear extrapolate\n' % (excitationFile))
+        fid.write('#hertzian_dipole: %s %.3f %.3f %.3f %s\n' %(polari,TXPos[0],TXPos[1],TXPos[2],
+                                                        'prc.0'))
+    else:
+        fid.write('#waveform: ricker %.3f %e %s\n' % (1, freqDipole, 'MyRicker'))
+        fid.write('#hertzian_dipole: %s %.3f %.3f %.3f %s\n' %(polari,TXPos[0],TXPos[1],TXPos[2],
+                                                        'MyRicker'))
 
 
 fid.write('\n----------Receivers----------\n')
@@ -272,12 +302,12 @@ if isGeometry:
     if isSlice: #2D
         fid.write('#geometry_view: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %s n\n' %(
                 0,TXPos[1],0,xDimAll, TXPos[1]+resolutionY, zDimAll,
-                resolutionX, resolutionY, resolutionZ, dirName))
+                geomScaling*resolutionX, geomScaling*resolutionY, geomScaling*resolutionZ, dirName))
 
     else:       #3D
         fid.write('#geometry_view: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %s n\n' %(
                 0,0,0,xDimAll, yDimAll, zDimAll,
-                resolutionX, resolutionY, resolutionZ, dirName))
+                geomScaling*resolutionX, geomScaling*resolutionY, geomScaling*resolutionZ, dirName))
 
 # Snapshots
 if nSnaps > 0:
@@ -289,13 +319,13 @@ if nSnaps > 0:
             name = 'halfspace' + 'dt%.2e_snap' %(i*dt)
             fid.write('#snapshot: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %e %s\n' %(
                         0, RXPos[1], 0, xDimAll, RXPos[1] + resolutionY, zDimAll,  
-                        resolutionX,resolutionY,resolutionZ,i*dt, name + str(i) ))
+                        geomScaling*resolutionX,geomScaling*resolutionY,geomScaling*resolutionZ,i*dt, name + str(i) ))
     else:
         for i in range(1, nSnaps+1):
             name = 'halfspace' + 'dt%.2e_snap' %(i*dt)
             fid.write('#snapshot: %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %e %s\n' %(
                         0, 0, 0, xDimAll, yDimAll, zDimAll,  
-                        resolutionX,resolutionY,resolutionZ, i*dt, name + str(i) ))
+                        geomScaling*resolutionX,geomScaling*resolutionY,geomScaling*resolutionZ, i*dt, name + str(i) ))
 
 fid.close()
 print(fileName)

@@ -2,7 +2,7 @@ import numpy as np
 import io
 
 def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str, 
-                       resolution:float, fid:io.TextIOWrapper, isTx:bool = True, ID:str = 'RLFLA'):
+                       resolution:float, fid:io.TextIOWrapper, isTx:bool = True, ID:str = 'RLFLA', amplitude = 1.0):
     '''
     Generates a Resistor Loaded Finite Length Antenna (RLFLA) in gprMax.
     based on Sensors and Software crosshole 200 MHz based on PulseEKKO design 
@@ -31,7 +31,7 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
     radiusAn       = 0.03   # radius antenna
     radiusRes      = 0.02
     centerFreq     = 92e6
-    resSrc         = 0       # resistance of voltage -> hard source
+    resSrc         = 0       # resistance of voltage -> if zero , hard source
     nResistor      = 10      # number of resistors at each side of feeding point
  
     Xgeom = {}
@@ -101,7 +101,8 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
                                                                    z-Zgeom['cellSize']-Zgeom['lengthWire']+iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])+Zgeom['lengthRes'],
                                                                    radiusRes,
                                                                    ID))
-  
+    for iRes in range(nResistor): 
+
         fid.write('#cylinder: %f %f %f %f %f %f %f resistor%s\n'   %(x+Xgeom['cellSize']+Xgeom['lengthWire']-iRes*(Xgeom['deltaRes']+Xgeom['lengthRes'])-Xgeom['lengthRes'],
                                                                      y+Ygeom['cellSize']+Ygeom['lengthWire']-iRes*(Ygeom['deltaRes']+Ygeom['lengthRes'])-Ygeom['lengthRes'],
                                                                      z+Zgeom['cellSize']+Zgeom['lengthWire']-iRes*(Zgeom['deltaRes']+Zgeom['lengthRes'])-Zgeom['lengthRes'],
@@ -117,17 +118,21 @@ def antenna_like_RLFLAText(x:float, y:float, z:float, polarisation:str,
     #      xf=x+Xgeom['cellSize'], yf=y+Ygeom['cellSize'], zf=z+Zgeom['cellSize'],
     #      material='free_space')
 
-    fid.write('#cylinder: %f %f %f %f %f %f %f free_space\n' % (x-Xgeom['cellSize'],
-                                                               y-Ygeom['cellSize'],
-                                                               z-Zgeom['cellSize'],
+    if isTx:    # Source
+        fid.write('#waveform: gaussian %f %f %s\n' % (amplitude, centerFreq, 'gaussian' + ID))
+        fid.write('#voltage_source: %s %f %f %f %f %s\n' %(polarisation,x,y,z,resSrc,'gaussian' + ID))
+
+    else:       # Receiver
+        fid.write('#rx: %f %f %f\n' %(x,y,z))
+
+
+
+    fid.write('#cylinder: %f %f %f %f %f %f %f free_space\n' % (x,   # minus sign deleted
+                                                               y,
+                                                               z,
                                                                x+Xgeom['cellSize'],
                                                                y+Ygeom['cellSize'],
                                                                z+Zgeom['cellSize'],
                                                                radiusRes))
 
-    if isTx:    # Source
-        fid.write('#waveform: ricker %f %f %s\n' % (1, centerFreq, 'ricker' + ID))
-        fid.write('#voltage_source: %s %f %f %f %f %s\n' %(polarisation,x,y,z,resSrc,'ricker' + ID))
-
-    else:       # Receiver
-        fid.write('#rx: %f %f %f\n' %(x,y,z))
+ 
