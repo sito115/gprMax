@@ -1,5 +1,15 @@
-%% Select Path
 function [allData,fieldName] = fft_gprMaxOutput(path, fileName, isFFT)
+% Load data of an out.-File into a structure
+% INPUT:
+% path          : character - path where out. file lies
+% fileName      : character - name of out.file including extension
+% isFFT         : logical - include FFT when loading the put
+%
+% OUTPUT: 
+% allData       : structure containing information about loaded data
+% fieldName     : name of file in structure
+
+
 
 fullfilename  = fullfile(path, fileName);
 allComponents = {'Ex', 'Ey', 'Ez'};         % to perform fft
